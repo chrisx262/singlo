@@ -159,6 +159,7 @@ header {
 
 .wkey {
   flex:1; height:88px;
+  cursor:pointer;
   background:rgba(245,245,255,0.92);
   border-radius:0 0 7px 7px;
   border:1px solid rgba(0,0,0,0.18);
@@ -178,6 +179,7 @@ header {
 .wkey.active-out .klabel { color:rgba(255,255,255,0.9); }
 
 .black-keys { position:absolute; top:0; left:0; right:0; height:56px; pointer-events:none; }
+.bkey { pointer-events:all; cursor:pointer; }
 .bkey {
   position:absolute; height:100%;
   background:#131325;
@@ -421,7 +423,9 @@ function buildPiano() {
       const el   = document.createElement('div');
       el.className = 'wkey' + (currentScale.has(nc) ? ' in-scale' : '');
       el.dataset.midi = midi;
+      el.dataset.noteClass = nc;
       el.innerHTML = `<span class="klabel">${NOTE_NAMES[nc]}</span>`;
+      el.addEventListener('pointerdown', e => { e.preventDefault(); playNote(midi); });
       wc.appendChild(el);
       wkEls[midi] = el;
     }
@@ -441,8 +445,10 @@ function buildPiano() {
         const el   = document.createElement('div');
         el.className = 'bkey' + (currentScale.has(nc) ? ' in-scale' : '');
         el.dataset.midi = midi;
+        el.dataset.noteClass = nc;
         el.style.left  = (ref.offsetLeft + ref.offsetWidth - bw / 2) + 'px';
         el.style.width = bw + 'px';
+        el.addEventListener('pointerdown', e => { e.preventDefault(); playNote(midi); });
         bc.appendChild(el);
         bkEls[midi] = el;
       }
@@ -526,6 +532,66 @@ function drawTrail() {
       ctx.fillStyle = '#fff';
       ctx.beginPath(); ctx.arc(x2, y2, 2, 0, Math.PI * 2); ctx.fill();
     }
+  }
+}
+
+// ── Piano sound synthesis ─────────────────────────────────────────────────────
+
+function midiToFreq(midi) {
+  return 440 * Math.pow(2, (midi - 69) / 12);
+}
+
+function playNote(midi) {
+  // Create a fresh AudioContext if none exists yet (browser requires user gesture)
+  const actx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+  if (!audioCtx) audioCtx = actx;
+  if (actx.state === 'suspended') actx.resume();
+
+  const freq = midiToFreq(midi);
+  const now  = actx.currentTime;
+
+  const master = actx.createGain();
+  master.connect(actx.destination);
+  master.gain.setValueAtTime(0.001, now);
+  master.gain.linearRampToValueAtTime(0.45, now + 0.008);  // fast attack
+  master.gain.exponentialRampToValueAtTime(0.18, now + 0.3); // decay
+  master.gain.exponentialRampToValueAtTime(0.001, now + 1.8); // release
+
+  // Fundamental (triangle — warm tone)
+  const o1 = actx.createOscillator();
+  const g1 = actx.createGain();
+  o1.type = 'triangle';
+  o1.frequency.value = freq;
+  g1.gain.value = 1;
+  o1.connect(g1); g1.connect(master);
+  o1.start(now); o1.stop(now + 1.8);
+
+  // 2nd harmonic (sine)
+  const o2 = actx.createOscillator();
+  const g2 = actx.createGain();
+  o2.type = 'sine';
+  o2.frequency.value = freq * 2;
+  g2.gain.value = 0.35;
+  o2.connect(g2); g2.connect(master);
+  o2.start(now); o2.stop(now + 1.2);
+
+  // 3rd harmonic (sine) — adds brightness
+  const o3 = actx.createOscillator();
+  const g3 = actx.createGain();
+  o3.type = 'sine';
+  o3.frequency.value = freq * 3;
+  g3.gain.value = 0.12;
+  o3.connect(g3); g3.connect(master);
+  o3.start(now); o3.stop(now + 0.8);
+
+  // Brief visual flash on key
+  const el = wkEls[midi] || bkEls[midi];
+  if (el) {
+    const ik = inKey(parseInt(el.dataset.noteClass));
+    el.classList.add(ik ? 'active-in' : 'active-out');
+    setTimeout(() => {
+      if (!running) el.classList.remove('active-in', 'active-out');
+    }, 400);
   }
 }
 
