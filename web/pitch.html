@@ -214,6 +214,52 @@ header {
   50%      { box-shadow:0 8px 46px rgba(0,201,167,0.8); }
 }
 @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+
+/* XP HUD */
+.xp-hud {
+  display:flex; align-items:center; gap:6px;
+  background:rgba(255,217,61,0.14); border:1.5px solid rgba(255,217,61,0.3);
+  border-radius:50px; padding:6px 12px; cursor:pointer;
+  font-size:0.8rem; font-weight:800; color:var(--yellow);
+  transition:background 0.2s;
+}
+.xp-hud:hover { background:rgba(255,217,61,0.22); }
+
+/* XP pop animation */
+.xp-pop {
+  position:fixed; z-index:200; pointer-events:none;
+  font-family:'Fredoka One',cursive; font-size:1.1rem; color:var(--teal);
+  text-shadow:0 0 10px rgba(0,201,167,0.8);
+  animation:xpFloat 1.2s ease-out forwards;
+}
+@keyframes xpFloat { 0%{opacity:1;transform:translateY(0)} 100%{opacity:0;transform:translateY(-60px)} }
+
+/* Belt up overlay */
+.beltup-overlay {
+  position:fixed; inset:0; z-index:300;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(0,0,0,0.85); backdrop-filter:blur(14px);
+  opacity:0; pointer-events:none; transition:opacity 0.3s;
+}
+.beltup-overlay.show { opacity:1; pointer-events:all; }
+.beltup-card {
+  background:#1e1e38; border-radius:28px;
+  border:2px solid rgba(255,255,255,0.12);
+  padding:38px 28px; text-align:center;
+  width:90%; max-width:340px;
+  transform:scale(0.8); transition:transform 0.45s cubic-bezier(0.34,1.56,0.64,1);
+}
+.beltup-overlay.show .beltup-card { transform:scale(1); }
+.beltup-icon { font-size:5.5rem; display:block; margin-bottom:10px; animation:popIn 0.5s 0.2s ease both; }
+@keyframes popIn { 0%{transform:scale(0) rotate(-15deg)} 80%{transform:scale(1.12)} 100%{transform:scale(1)} }
+.beltup-title { font-family:'Fredoka One',cursive; font-size:1.9rem; margin-bottom:6px; }
+.beltup-sub { color:rgba(255,255,255,0.6); font-size:0.88rem; font-weight:700; margin-bottom:22px; line-height:1.5; }
+.beltup-btn {
+  width:100%; padding:14px; border:none; border-radius:16px;
+  font-family:'Fredoka One',cursive; font-size:1.05rem; cursor:pointer; color:#fff;
+  background:linear-gradient(135deg,var(--teal),var(--purple));
+  box-shadow:0 6px 20px rgba(0,201,167,0.4);
+}
 </style>
 </head>
 <body>
@@ -229,21 +275,27 @@ header {
   <header>
     <a href="index.html" class="back-btn">←</a>
     <div class="page-title">🎵 Pitch Trainer</div>
-    <select class="key-select" id="keySelect" onchange="setKey(this.value)">
-      <option value="C Major">C Major</option>
-      <option value="G Major">G Major</option>
-      <option value="D Major">D Major</option>
-      <option value="A Major">A Major</option>
-      <option value="E Major">E Major</option>
-      <option value="F Major">F Major</option>
-      <option value="Bb Major">Bb Major</option>
-      <option value="A Minor">A Minor</option>
-      <option value="E Minor">E Minor</option>
-      <option value="D Minor">D Minor</option>
-      <option value="G Minor">G Minor</option>
-      <option value="B Minor">B Minor</option>
-    </select>
+    <div class="xp-hud" id="xpHud" onclick="location.href='badges.html'">
+      <span id="hudBelt">🤍</span>
+      <span id="hudXP">0 XP</span>
+    </div>
   </header>
+
+  <!-- Key selector -->
+  <select class="key-select" id="keySelect" onchange="setKey(this.value)" style="width:100%;margin-bottom:12px;border-radius:14px;padding:10px 14px;">
+    <option value="C Major">C Major</option>
+    <option value="G Major">G Major</option>
+    <option value="D Major">D Major</option>
+    <option value="A Major">A Major</option>
+    <option value="E Major">E Major</option>
+    <option value="F Major">F Major</option>
+    <option value="Bb Major">Bb Major</option>
+    <option value="A Minor">A Minor</option>
+    <option value="E Minor">E Minor</option>
+    <option value="D Minor">D Minor</option>
+    <option value="G Minor">G Minor</option>
+    <option value="B Minor">B Minor</option>
+  </select>
 
   <!-- Note display -->
   <div class="note-card">
@@ -281,6 +333,16 @@ header {
     🎤 Tap to Start Singing
   </button>
 
+</div>
+
+<!-- Belt promotion overlay -->
+<div class="beltup-overlay" id="beltupOverlay">
+  <div class="beltup-card">
+    <span class="beltup-icon" id="beltupIcon">💛</span>
+    <div class="beltup-title" id="beltupTitle">Yellow Belt!</div>
+    <div class="beltup-sub" id="beltupSub">You earned it. Keep going!</div>
+    <button class="beltup-btn" onclick="closeBeltUp()">Keep Training 🔥</button>
+  </div>
 </div>
 
 <script>
@@ -687,7 +749,144 @@ function updateCents(cents) {
   el.className  = 'cents-needle ' + (Math.abs(cents) <= 10 ? 'center' : cents < 0 ? 'flat' : 'sharp');
 }
 
+// ── XP & Belt system ──────────────────────────────────────────────────────────
+
+const BELTS = [
+  { name:'White Belt',  emoji:'🤍', color:'#c8c8e8', xp:0      },
+  { name:'Yellow Belt', emoji:'💛', color:'#FFD93D', xp:200    },
+  { name:'Orange Belt', emoji:'🧡', color:'#FF7043', xp:500    },
+  { name:'Green Belt',  emoji:'💚', color:'#4CAF50', xp:1200   },
+  { name:'Blue Belt',   emoji:'💙', color:'#3D9EFF', xp:2500   },
+  { name:'Purple Belt', emoji:'💜', color:'#7B61FF', xp:5000   },
+  { name:'Red Belt',    emoji:'❤️', color:'#F44336', xp:10000  },
+  { name:'Brown Belt',  emoji:'🤎', color:'#8D5524', xp:20000  },
+  { name:'Black Belt',  emoji:'🖤', color:'#9b9bc8', xp:40000  },
+];
+
+function loadProg()      { try { return JSON.parse(localStorage.getItem('singlo_progress')) || {}; } catch { return {}; } }
+function saveProg(p)     { localStorage.setItem('singlo_progress', JSON.stringify(p)); }
+function beltIdx(xp)     { let b=0; BELTS.forEach((bt,i)=>{ if(xp>=bt.xp) b=i; }); return b; }
+
+let xpAccum     = 0;     // fractional XP buffer
+let inKeyFrames = 0;     // consecutive in-key frames
+let bestStreak  = 0;
+const XP_PER_SEC     = 1.5;   // base XP per second in key
+const XP_PERFECT_BONUS = 1;   // extra XP/sec when cents < 10
+const FPS_EST        = 50;    // estimated loop fps
+
+function earnXP(ik, cents) {
+  if (!ik) { inKeyFrames = 0; return; }
+  inKeyFrames++;
+  const streakSec = inKeyFrames / FPS_EST;
+  if (streakSec > bestStreak) bestStreak = streakSec;
+
+  const rate = XP_PER_SEC + (Math.abs(cents) <= 10 ? XP_PERFECT_BONUS : 0);
+  xpAccum += rate / FPS_EST;
+
+  if (xpAccum >= 1) {
+    const earned  = Math.floor(xpAccum);
+    xpAccum      -= earned;
+    const p       = loadProg();
+    const oldBelt = beltIdx(p.xp || 0);
+    p.xp          = (p.xp || 0) + earned;
+    if (bestStreak > (p.bestStreak || 0)) p.bestStreak = Math.round(bestStreak);
+    const newBelt = beltIdx(p.xp);
+    saveProg(p);
+    updateHUD(p.xp, newBelt);
+    if (newBelt > oldBelt) showBeltUp(newBelt);
+    if (earned >= 5) popXP('+' + earned + ' XP');
+  }
+}
+
+function updateHUD(xp, bi) {
+  document.getElementById('hudBelt').textContent = BELTS[bi].emoji;
+  document.getElementById('hudXP').textContent   = xp.toLocaleString() + ' XP';
+}
+
+function popXP(text) {
+  const hud  = document.getElementById('xpHud');
+  const rect = hud.getBoundingClientRect();
+  const el   = document.createElement('div');
+  el.className   = 'xp-pop';
+  el.textContent = text;
+  el.style.cssText = `left:${rect.left + rect.width/2 - 30}px;top:${rect.bottom + 8}px;`;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1300);
+}
+
+function showBeltUp(bi) {
+  const b = BELTS[bi];
+  document.getElementById('beltupIcon').textContent  = b.emoji;
+  document.getElementById('beltupTitle').textContent = b.name + ' Unlocked!';
+  document.getElementById('beltupSub').textContent   = 'You sang your way to ' + b.name + '. Keep going!';
+  document.getElementById('beltupOverlay').classList.add('show');
+  const cols = ['#FF4F91','#FFD93D','b.color','#7B61FF','#fff'];
+  for (let i = 0; i < 60; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.cssText = `position:fixed;width:9px;height:9px;border-radius:2px;pointer-events:none;z-index:400;left:${Math.random()*100}vw;top:-10px;background:${[b.color,'#FFD93D','#fff','#FF4F91'][i%4]};animation:fall 1.9s ${Math.random()*0.8}s ease-in forwards;`;
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 3000);
+  }
+}
+
+function closeBeltUp() {
+  document.getElementById('beltupOverlay').classList.remove('show');
+  const p = loadProg();
+  location.href = 'badges.html?promoted=' + beltIdx(p.xp || 0);
+}
+
+// Hook XP into the main loop
+const _origLoop = loop;
+function loop() {
+  analyser.getFloatTimeDomainData(floatBuf);
+  const freq = detectPitch(floatBuf, audioCtx.sampleRate);
+  if (freq > 0) {
+    const note = freqToNote(freq);
+    const ik   = inKey(note.nc);
+    highlightKey(note.midi, ik);
+    updateCents(note.cents);
+    setDisplay(note, ik);
+    pushTrail(note.midi, ik);
+    earnXP(ik, note.cents);
+  } else {
+    clearKeys();
+    setDisplay(null);
+    pushTrail(null, false);
+    inKeyFrames = 0;
+  }
+  rafId = requestAnimationFrame(loop);
+}
+
+// Save session on stop
+const _origStop = stopMic;
+function stopMic() {
+  const p = loadProg();
+  p.sessions = (p.sessions || 0) + 1;
+  if (bestStreak > (p.bestStreak || 0)) p.bestStreak = Math.round(bestStreak);
+  saveProg(p);
+  bestStreak  = 0;
+  inKeyFrames = 0;
+  xpAccum     = 0;
+  running = false;
+  if (rafId) cancelAnimationFrame(rafId);
+  micStream?.getTracks().forEach(t => t.stop());
+  audioCtx?.close();
+  document.getElementById('micBtn').className = 'mic-btn';
+  document.getElementById('micBtn').innerHTML = '🎤 Tap to Start Singing';
+  clearKeys();
+  setDisplay(null);
+  pushTrail(null, false);
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
+
+// Load saved XP into HUD on page load
+(function() {
+  const p  = loadProg();
+  const bi = beltIdx(p.xp || 0);
+  updateHUD(p.xp || 0, bi);
+})();
 
 buildPiano();
 drawTrail();
