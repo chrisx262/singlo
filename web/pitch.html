@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Singlo 🎵 – Pitch Trainer</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --pink:   #FF4F91;
+  --yellow: #FFD93D;
+  --teal:   #00C9A7;
+  --purple: #7B61FF;
+  --orange: #FF7043;
+  --dark:   #1A1A2E;
+  --card:   rgba(255,255,255,0.07);
+  --radius: 22px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--dark);
+  color: #fff;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Background */
+.bg { position:fixed; inset:0; z-index:0; overflow:hidden; }
+.blob { position:absolute; border-radius:50%; filter:blur(80px); opacity:0.18; animation:float 9s ease-in-out infinite; }
+.b1 { width:420px;height:420px;background:var(--purple);top:-120px;left:-80px; }
+.b2 { width:320px;height:320px;background:var(--pink);bottom:-80px;right:-60px;animation-delay:3s; }
+.b3 { width:220px;height:220px;background:var(--teal);top:45%;left:45%;animation-delay:1.5s; }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-22px)} }
+
+.wrapper {
+  position:relative; z-index:2;
+  max-width:480px; margin:0 auto;
+  padding:20px 16px 48px;
+}
+
+/* Header */
+header {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:18px;
+}
+.back-btn {
+  width:40px; height:40px; border-radius:12px;
+  background:var(--card); border:1.5px solid rgba(255,255,255,0.1);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.1rem; cursor:pointer; text-decoration:none; color:#fff;
+  transition:background 0.2s;
+}
+.back-btn:hover { background:rgba(255,255,255,0.12); }
+.page-title { font-family:'Fredoka One',cursive; font-size:1.3rem; }
+.key-select {
+  background:var(--card);
+  border:1.5px solid rgba(255,255,255,0.15);
+  border-radius:50px; color:#fff;
+  font-family:'Nunito',sans-serif; font-weight:800; font-size:0.82rem;
+  padding:7px 12px; cursor:pointer; outline:none;
+}
+.key-select option { background:#1e1e38; }
+
+/* Note display card */
+.note-card {
+  background:var(--card);
+  border:1.5px solid rgba(255,255,255,0.08);
+  border-radius:var(--radius);
+  padding:22px 20px 18px;
+  margin-bottom:14px;
+  text-align:center;
+  animation:fadeUp 0.5s ease both;
+}
+.note-name {
+  font-family:'Fredoka One',cursive;
+  font-size:4.5rem; line-height:1;
+  min-height:5rem;
+  transition:color 0.08s, transform 0.08s;
+}
+.note-name.silent   { color:rgba(255,255,255,0.18); }
+.note-name.in-key   { color:var(--teal); transform:scale(1.04); }
+.note-name.out-key  { color:var(--pink); }
+
+.note-status {
+  font-size:0.78rem; font-weight:800;
+  letter-spacing:1.2px; text-transform:uppercase;
+  min-height:1.1rem; margin:6px 0 16px;
+  transition:color 0.15s;
+}
+.note-status.in-key  { color:var(--teal); }
+.note-status.out-key { color:var(--pink); }
+.note-status.silent  { color:rgba(255,255,255,0.3); }
+
+/* Cents meter */
+.cents-wrap { max-width:300px; margin:0 auto; }
+.cents-labels {
+  display:flex; justify-content:space-between;
+  font-size:0.63rem; font-weight:800;
+  color:rgba(255,255,255,0.35);
+  margin-bottom:5px; padding:0 2px;
+}
+.cents-track {
+  height:14px; background:rgba(255,255,255,0.07);
+  border-radius:50px; position:relative;
+}
+.cents-track-fill {
+  position:absolute; inset:0; border-radius:50px;
+  background:linear-gradient(90deg, #64B5F6 0%, rgba(255,255,255,0.05) 40%, rgba(255,255,255,0.05) 60%, var(--pink) 100%);
+  opacity:0.25;
+}
+.cents-center-line {
+  position:absolute; left:50%; top:-2px;
+  width:2px; height:18px;
+  background:rgba(255,255,255,0.25);
+  transform:translateX(-50%);
+}
+.cents-needle {
+  position:absolute; top:50%;
+  width:18px; height:18px; border-radius:50%;
+  transform:translate(-50%,-50%);
+  left:50%;
+  transition:left 0.07s ease, background 0.15s;
+  box-shadow:0 0 10px rgba(255,255,255,0.5);
+  background:rgba(255,255,255,0.4);
+}
+.cents-needle.center { background:var(--teal); box-shadow:0 0 14px rgba(0,201,167,0.9); }
+.cents-needle.flat   { background:#64B5F6;    box-shadow:0 0 12px rgba(100,181,246,0.8); }
+.cents-needle.sharp  { background:var(--pink); box-shadow:0 0 12px rgba(255,79,145,0.8); }
+
+/* Pitch trail */
+.trail-card {
+  border-radius:16px; overflow:hidden;
+  margin-bottom:14px;
+  background:rgba(255,255,255,0.03);
+  border:1.5px solid rgba(255,255,255,0.06);
+  animation:fadeUp 0.5s 0.05s ease both;
+}
+#trailCanvas { display:block; width:100%; height:72px; }
+
+/* Piano */
+.piano-section { margin-bottom:18px; animation:fadeUp 0.5s 0.1s ease both; }
+.piano-label {
+  font-size:0.68rem; font-weight:800; letter-spacing:2px;
+  text-transform:uppercase; color:rgba(255,255,255,0.3);
+  margin-bottom:10px; text-align:center;
+}
+.legend {
+  display:flex; gap:18px; justify-content:center;
+  margin-bottom:10px; font-size:0.7rem; font-weight:800;
+  color:rgba(255,255,255,0.45);
+}
+.dot { width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle; }
+.dot.g { background:var(--teal); }
+.dot.r { background:var(--pink); }
+
+.piano-wrap { position:relative; border-radius:10px; overflow:hidden; }
+.white-keys { display:flex; gap:2px; }
+
+.wkey {
+  flex:1; height:88px;
+  background:rgba(245,245,255,0.92);
+  border-radius:0 0 7px 7px;
+  border:1px solid rgba(0,0,0,0.18);
+  display:flex; align-items:flex-end; justify-content:center;
+  padding-bottom:5px;
+  transition:background 0.07s, box-shadow 0.07s;
+  position:relative;
+}
+.wkey .klabel { font-size:0.52rem; font-weight:900; color:rgba(0,0,0,0.45); text-transform:uppercase; }
+.wkey.in-scale::after {
+  content:''; position:absolute; bottom:0; left:0; right:0;
+  height:5px; background:var(--teal); opacity:0.7; border-radius:0 0 7px 7px;
+}
+.wkey.active-in  { background:var(--teal)!important; box-shadow:0 0 22px rgba(0,201,167,0.9)!important; }
+.wkey.active-in .klabel  { color:rgba(255,255,255,0.9); }
+.wkey.active-out { background:var(--pink)!important; box-shadow:0 0 22px rgba(255,79,145,0.9)!important; }
+.wkey.active-out .klabel { color:rgba(255,255,255,0.9); }
+
+.black-keys { position:absolute; top:0; left:0; right:0; height:56px; pointer-events:none; }
+.bkey {
+  position:absolute; height:100%;
+  background:#131325;
+  border-radius:0 0 5px 5px;
+  border:1px solid rgba(255,255,255,0.06);
+  transition:background 0.07s, box-shadow 0.07s;
+}
+.bkey.in-scale   { background:#1e1e40; border-bottom:3px solid var(--teal); }
+.bkey.active-in  { background:var(--teal)!important; box-shadow:0 0 16px rgba(0,201,167,1)!important; }
+.bkey.active-out { background:var(--pink)!important; box-shadow:0 0 16px rgba(255,79,145,1)!important; }
+
+/* Mic button */
+.mic-btn {
+  width:100%; padding:18px;
+  background:linear-gradient(135deg,var(--pink),var(--purple));
+  border:none; border-radius:var(--radius);
+  color:#fff; font-family:'Fredoka One',cursive;
+  font-size:1.2rem; cursor:pointer;
+  box-shadow:0 8px 28px rgba(255,79,145,0.4);
+  transition:all 0.2s;
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  animation:fadeUp 0.5s 0.15s ease both;
+}
+.mic-btn:hover { transform:translateY(-2px); }
+.mic-btn.on {
+  background:linear-gradient(135deg,var(--teal),var(--purple));
+  box-shadow:0 8px 28px rgba(0,201,167,0.5);
+  animation:pulse-btn 2s ease-in-out infinite;
+}
+@keyframes pulse-btn {
+  0%,100% { box-shadow:0 8px 28px rgba(0,201,167,0.4); }
+  50%      { box-shadow:0 8px 46px rgba(0,201,167,0.8); }
+}
+@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+</style>
+</head>
+<body>
+
+<div class="bg">
+  <div class="blob b1"></div>
+  <div class="blob b2"></div>
+  <div class="blob b3"></div>
+</div>
+
+<div class="wrapper">
+
+  <header>
+    <a href="index.html" class="back-btn">←</a>
+    <div class="page-title">🎵 Pitch Trainer</div>
+    <select class="key-select" id="keySelect" onchange="setKey(this.value)">
+      <option value="C Major">C Major</option>
+      <option value="G Major">G Major</option>
+      <option value="D Major">D Major</option>
+      <option value="A Major">A Major</option>
+      <option value="E Major">E Major</option>
+      <option value="F Major">F Major</option>
+      <option value="Bb Major">Bb Major</option>
+      <option value="A Minor">A Minor</option>
+      <option value="E Minor">E Minor</option>
+      <option value="D Minor">D Minor</option>
+      <option value="G Minor">G Minor</option>
+      <option value="B Minor">B Minor</option>
+    </select>
+  </header>
+
+  <!-- Note display -->
+  <div class="note-card">
+    <div class="note-name silent" id="noteName">–</div>
+    <div class="note-status silent" id="noteStatus">Tap the mic to start</div>
+    <div class="cents-wrap">
+      <div class="cents-labels"><span>♭ Flat</span><span>In Tune</span><span>Sharp ♯</span></div>
+      <div class="cents-track">
+        <div class="cents-track-fill"></div>
+        <div class="cents-center-line"></div>
+        <div class="cents-needle" id="needle"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pitch trail -->
+  <div class="trail-card">
+    <canvas id="trailCanvas"></canvas>
+  </div>
+
+  <!-- Piano keyboard -->
+  <div class="piano-section">
+    <div class="piano-label">Singing Range · C3 – B4</div>
+    <div class="legend">
+      <span><span class="dot g"></span>In Key</span>
+      <span><span class="dot r"></span>Off Key</span>
+    </div>
+    <div class="piano-wrap">
+      <div class="white-keys" id="wkeys"></div>
+      <div class="black-keys" id="bkeys"></div>
+    </div>
+  </div>
+
+  <button class="mic-btn" id="micBtn" onclick="toggleMic()">
+    🎤 Tap to Start Singing
+  </button>
+
+</div>
+
+<script>
+// ── Music theory ─────────────────────────────────────────────────────────────
+
+const SCALES = {
+  'C Major':  [0,2,4,5,7,9,11],
+  'G Major':  [0,2,4,7,9,11,6],
+  'D Major':  [2,4,6,7,9,11,1],
+  'A Major':  [1,4,6,9,11,2,8],   // rearranged for clarity: set of note classes
+  'E Major':  [1,3,4,6,8,9,11],
+  'F Major':  [0,2,4,5,7,9,10],
+  'Bb Major': [0,2,3,5,7,9,10],
+  'A Minor':  [0,2,4,5,7,9,11],   // natural minor = relative of C Major
+  'E Minor':  [2,4,6,7,9,11,0],
+  'D Minor':  [0,2,3,5,7,9,10],
+  'G Minor':  [2,3,5,7,8,10,0],
+  'B Minor':  [1,2,4,6,7,9,11],
+};
+
+// Correct scale definitions (sorted sets of 7 note classes)
+const SCALE_NOTES = {
+  'C Major':  new Set([0,2,4,5,7,9,11]),
+  'G Major':  new Set([7,9,11,0,2,4,6]),
+  'D Major':  new Set([2,4,6,7,9,11,1]),
+  'A Major':  new Set([9,11,1,2,4,6,8]),
+  'E Major':  new Set([4,6,8,9,11,1,3]),
+  'F Major':  new Set([5,7,9,10,0,2,4]),
+  'Bb Major': new Set([10,0,2,3,5,7,9]),
+  'A Minor':  new Set([9,11,0,2,4,5,7]),
+  'E Minor':  new Set([4,6,7,9,11,0,2]),
+  'D Minor':  new Set([2,4,5,7,9,10,0]),
+  'G Minor':  new Set([7,9,10,0,2,3,5]),
+  'B Minor':  new Set([11,1,2,4,6,7,9]),
+};
+
+const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+let currentKey = 'C Major';
+let currentScale = SCALE_NOTES['C Major'];
+
+function setKey(k) {
+  currentKey = k;
+  currentScale = SCALE_NOTES[k];
+  buildPiano();
+}
+
+function inKey(nc) { return currentScale.has(((nc % 12) + 12) % 12); }
+
+// ── Pitch math ───────────────────────────────────────────────────────────────
+
+function freqToNote(freq) {
+  const exactMidi = 12 * Math.log2(freq / 440) + 69;
+  const midi      = Math.round(exactMidi);
+  const cents     = Math.round((exactMidi - midi) * 100);
+  const nc        = ((midi % 12) + 12) % 12;
+  const octave    = Math.floor(midi / 12) - 1;
+  return { name: NOTE_NAMES[nc], octave, nc, cents, midi };
+}
+
+function nearestInKey(nc) {
+  let best = -1, bestD = 13;
+  for (const s of currentScale) {
+    const d = Math.min(Math.abs(s - nc), 12 - Math.abs(s - nc));
+    if (d < bestD) { bestD = d; best = s; }
+  }
+  return best >= 0 ? NOTE_NAMES[best] : '';
+}
+
+// ── YIN pitch detection ───────────────────────────────────────────────────────
+
+function detectPitch(buf, sampleRate) {
+  const n    = buf.length;
+  const half = n >> 1;
+
+  // RMS silence gate
+  let rms = 0;
+  for (let i = 0; i < n; i++) rms += buf[i] * buf[i];
+  if (Math.sqrt(rms / n) < 0.012) return -1;
+
+  // YIN difference function
+  const d = new Float32Array(half);
+  for (let lag = 1; lag < half; lag++) {
+    for (let i = 0; i < half; i++) {
+      const diff = buf[i] - buf[i + lag];
+      d[lag] += diff * diff;
+    }
+  }
+
+  // Cumulative mean normalised difference
+  const cmnd = new Float32Array(half);
+  cmnd[0] = 1;
+  let runSum = 0;
+  for (let lag = 1; lag < half; lag++) {
+    runSum += d[lag];
+    cmnd[lag] = runSum > 0 ? (d[lag] * lag) / runSum : 1;
+  }
+
+  // First dip below threshold
+  const THRESH = 0.15;
+  let lag = 2;
+  while (lag < half - 1) {
+    if (cmnd[lag] < THRESH) {
+      while (lag + 1 < half && cmnd[lag + 1] < cmnd[lag]) lag++;
+      break;
+    }
+    lag++;
+  }
+  if (lag >= half - 1) return -1;
+
+  // Parabolic interpolation
+  const a = cmnd[lag - 1], b = cmnd[lag], c = cmnd[lag + 1];
+  const denom = 2 * b - a - c;
+  const refined = denom !== 0 ? lag + 0.5 * (a - c) / denom : lag;
+
+  const freq = sampleRate / refined;
+  return (freq >= 70 && freq <= 1200) ? freq : -1;
+}
+
+// ── Piano ────────────────────────────────────────────────────────────────────
+
+// C3=48 → B4=71  (two octaves)
+const WHITE_NC = [0,2,4,5,7,9,11];        // note classes for C D E F G A B
+const HAS_BLACK = [true,true,false,true,true,true,false]; // C# D# - F# G# A# -
+
+let wkEls = {}; // midi → element
+let bkEls = {};
+
+function buildPiano() {
+  const wc = document.getElementById('wkeys');
+  const bc = document.getElementById('bkeys');
+  wc.innerHTML = '';
+  bc.innerHTML = '';
+  wkEls = {};
+  bkEls = {};
+
+  for (const oct of [3, 4]) {
+    for (let wi = 0; wi < 7; wi++) {
+      const nc   = WHITE_NC[wi];
+      const midi = (oct + 1) * 12 + nc;
+      const el   = document.createElement('div');
+      el.className = 'wkey' + (currentScale.has(nc) ? ' in-scale' : '');
+      el.dataset.midi = midi;
+      el.innerHTML = `<span class="klabel">${NOTE_NAMES[nc]}</span>`;
+      wc.appendChild(el);
+      wkEls[midi] = el;
+    }
+  }
+
+  // Black keys positioned after layout
+  requestAnimationFrame(() => {
+    const whites = wc.querySelectorAll('.wkey');
+    let wi = 0;
+    for (const oct of [3, 4]) {
+      for (let i = 0; i < 7; i++, wi++) {
+        if (!HAS_BLACK[i]) continue;
+        const nc   = (WHITE_NC[i] + 1) % 12;
+        const midi = (oct + 1) * 12 + nc;
+        const ref  = whites[wi];
+        const bw   = ref.offsetWidth * 0.62;
+        const el   = document.createElement('div');
+        el.className = 'bkey' + (currentScale.has(nc) ? ' in-scale' : '');
+        el.dataset.midi = midi;
+        el.style.left  = (ref.offsetLeft + ref.offsetWidth - bw / 2) + 'px';
+        el.style.width = bw + 'px';
+        bc.appendChild(el);
+        bkEls[midi] = el;
+      }
+    }
+  });
+}
+
+let lastMidi = null;
+
+function highlightKey(midi, isInKey) {
+  if (midi === lastMidi) return;
+  clearKeys();
+  lastMidi = midi;
+  const el = wkEls[midi] || bkEls[midi];
+  if (el) el.classList.add(isInKey ? 'active-in' : 'active-out');
+}
+
+function clearKeys() {
+  document.querySelectorAll('.active-in,.active-out').forEach(e => {
+    e.classList.remove('active-in','active-out');
+  });
+  lastMidi = null;
+}
+
+// ── Pitch trail canvas ────────────────────────────────────────────────────────
+
+const TRAIL_LEN  = 150;
+const MIDI_LO    = 48;   // C3
+const MIDI_HI    = 72;   // C5
+const trailBuf   = new Array(TRAIL_LEN).fill(null);
+let   trailHead  = 0;
+
+function pushTrail(midi, ik) {
+  trailBuf[trailHead % TRAIL_LEN] = midi ? { midi, ik } : null;
+  trailHead++;
+  drawTrail();
+}
+
+function drawTrail() {
+  const canvas = document.getElementById('trailCanvas');
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.clientWidth, H = canvas.clientHeight;
+  if (!W || !H) return;
+  if (canvas.width !== W * dpr) { canvas.width = W * dpr; canvas.height = H * dpr; }
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+
+  // Guide lines for in-key notes
+  for (const nc of currentScale) {
+    for (const oct of [3, 4]) {
+      const m = (oct + 1) * 12 + nc;
+      const y = H - ((m - MIDI_LO) / (MIDI_HI - MIDI_LO)) * H;
+      ctx.strokeStyle = 'rgba(0,201,167,0.1)';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+  }
+
+  // Ordered trail
+  const pts = [];
+  for (let i = 0; i < TRAIL_LEN; i++) {
+    pts.push(trailBuf[(trailHead - TRAIL_LEN + i + TRAIL_LEN * 2) % TRAIL_LEN]);
+  }
+
+  for (let i = 1; i < pts.length; i++) {
+    if (!pts[i] || !pts[i - 1]) continue;
+    const x1 = ((i - 1) / (TRAIL_LEN - 1)) * W;
+    const x2 = (i / (TRAIL_LEN - 1)) * W;
+    const m1 = Math.max(MIDI_LO, Math.min(MIDI_HI, pts[i - 1].midi));
+    const m2 = Math.max(MIDI_LO, Math.min(MIDI_HI, pts[i].midi));
+    const y1 = H - ((m1 - MIDI_LO) / (MIDI_HI - MIDI_LO)) * H;
+    const y2 = H - ((m2 - MIDI_LO) / (MIDI_HI - MIDI_LO)) * H;
+    ctx.strokeStyle = pts[i].ik ? 'rgba(0,201,167,0.85)' : 'rgba(255,79,145,0.85)';
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    if (i === pts.length - 1) {
+      ctx.fillStyle = pts[i].ik ? '#00C9A7' : '#FF4F91';
+      ctx.beginPath(); ctx.arc(x2, y2, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(x2, y2, 2, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+}
+
+// ── Audio engine ──────────────────────────────────────────────────────────────
+
+let audioCtx, analyser, micStream, rafId;
+let running = false;
+const BUF_SIZE = 2048;
+
+async function toggleMic() {
+  running ? stopMic() : await startMic();
+}
+
+async function startMic() {
+  try {
+    micStream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: false }
+    });
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = BUF_SIZE;
+    audioCtx.createMediaStreamSource(micStream).connect(analyser);
+    running = true;
+    document.getElementById('micBtn').className = 'mic-btn on';
+    document.getElementById('micBtn').textContent = '⏹ Stop Listening';
+    loop();
+  } catch(e) {
+    alert('Microphone access is required. Please allow mic permission and try again.');
+  }
+}
+
+function stopMic() {
+  running = false;
+  if (rafId) cancelAnimationFrame(rafId);
+  micStream?.getTracks().forEach(t => t.stop());
+  audioCtx?.close();
+  document.getElementById('micBtn').className = 'mic-btn';
+  document.getElementById('micBtn').innerHTML = '🎤 Tap to Start Singing';
+  clearKeys();
+  setDisplay(null);
+  pushTrail(null, false);
+}
+
+const floatBuf = new Float32Array(BUF_SIZE);
+
+function loop() {
+  analyser.getFloatTimeDomainData(floatBuf);
+  const freq = detectPitch(floatBuf, audioCtx.sampleRate);
+
+  if (freq > 0) {
+    const note = freqToNote(freq);
+    const ik   = inKey(note.nc);
+    highlightKey(note.midi, ik);
+    updateCents(note.cents);
+    setDisplay(note, ik);
+    pushTrail(note.midi, ik);
+  } else {
+    clearKeys();
+    setDisplay(null);
+    pushTrail(null, false);
+  }
+
+  rafId = requestAnimationFrame(loop);
+}
+
+// ── UI helpers ────────────────────────────────────────────────────────────────
+
+function setDisplay(note, ik) {
+  const nm = document.getElementById('noteName');
+  const ns = document.getElementById('noteStatus');
+  if (!note) {
+    nm.textContent = '–';
+    nm.className   = 'note-name silent';
+    ns.textContent = running ? 'Listening…' : 'Tap the mic to start';
+    ns.className   = 'note-status silent';
+    return;
+  }
+  nm.textContent = note.name + note.octave;
+  nm.className   = 'note-name ' + (ik ? 'in-key' : 'out-key');
+  if (ik) {
+    ns.textContent = '✓ In Key';
+    ns.className   = 'note-status in-key';
+  } else {
+    ns.textContent = `Off Key → try ${nearestInKey(note.nc)}`;
+    ns.className   = 'note-status out-key';
+  }
+}
+
+function updateCents(cents) {
+  const el  = document.getElementById('needle');
+  const pct = Math.max(4, Math.min(96, 50 + cents * 0.46));
+  el.style.left = pct + '%';
+  el.className  = 'cents-needle ' + (Math.abs(cents) <= 10 ? 'center' : cents < 0 ? 'flat' : 'sharp');
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+
+buildPiano();
+drawTrail();
+window.addEventListener('resize', () => { buildPiano(); drawTrail(); });
+</script>
+</body>
+</html>
