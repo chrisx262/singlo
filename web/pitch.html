@@ -138,6 +138,65 @@ header {
 }
 #trailCanvas { display:block; width:100%; height:72px; }
 
+/* Equalizer */
+.eq-card {
+  border-radius:16px;
+  padding:14px 14px 12px;
+  margin-bottom:14px;
+  background:linear-gradient(135deg, rgba(0,201,167,0.11), rgba(123,97,255,0.12));
+  border:1.5px solid rgba(255,255,255,0.07);
+  animation:fadeUp 0.5s 0.03s ease both;
+}
+.eq-head {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin-bottom:11px;
+}
+.eq-title {
+  font-size:0.68rem;
+  font-weight:900;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  color:rgba(255,255,255,0.4);
+}
+.eq-status {
+  font-size:0.68rem;
+  font-weight:900;
+  color:rgba(255,255,255,0.35);
+}
+.eq-status.live { color:var(--teal); }
+.eq-bars {
+  height:70px;
+  display:grid;
+  grid-template-columns:repeat(24, 1fr);
+  align-items:end;
+  gap:4px;
+}
+.eq-bar {
+  min-height:8px;
+  height:18px;
+  border-radius:999px 999px 4px 4px;
+  background:linear-gradient(to top, var(--teal), var(--yellow), var(--pink));
+  opacity:0.56;
+  box-shadow:0 0 12px rgba(0,201,167,0.18);
+  transition:height 0.08s ease, opacity 0.08s ease, box-shadow 0.08s ease;
+  animation:eqIdle 1.9s ease-in-out infinite;
+}
+.eq-bar:nth-child(3n) { animation-delay:0.15s; }
+.eq-bar:nth-child(4n) { animation-delay:0.3s; }
+.eq-bar:nth-child(5n) { animation-delay:0.45s; }
+.eq-bars.live .eq-bar {
+  animation:none;
+  opacity:0.92;
+  box-shadow:0 0 16px rgba(255,217,61,0.2);
+}
+@keyframes eqIdle {
+  0%,100% { height:16px; opacity:0.36; }
+  50% { height:34px; opacity:0.7; }
+}
+
 /* Piano */
 .piano-section { margin-bottom:18px; animation:fadeUp 0.5s 0.1s ease both; }
 .piano-label {
@@ -153,6 +212,62 @@ header {
 .dot { width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle; }
 .dot.g { background:var(--teal); }
 .dot.r { background:var(--pink); }
+
+.volume-control {
+  background:rgba(255,255,255,0.055);
+  border:1.5px solid rgba(255,255,255,0.08);
+  border-radius:14px;
+  padding:12px;
+  margin-bottom:12px;
+}
+.volume-row {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:9px;
+}
+.volume-label {
+  font-size:0.72rem;
+  font-weight:900;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  color:rgba(255,255,255,0.42);
+}
+.volume-value {
+  font-size:0.72rem;
+  font-weight:900;
+  color:var(--yellow);
+}
+.volume-slider {
+  appearance:none;
+  -webkit-appearance:none;
+  width:100%;
+  height:12px;
+  border-radius:999px;
+  outline:none;
+  background:linear-gradient(90deg, var(--teal), var(--yellow), var(--pink));
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,0.1);
+  cursor:pointer;
+}
+.volume-slider::-webkit-slider-thumb {
+  appearance:none;
+  -webkit-appearance:none;
+  width:24px;
+  height:24px;
+  border:3px solid #fff;
+  border-radius:50%;
+  background:var(--purple);
+  box-shadow:0 0 18px rgba(123,97,255,0.8);
+}
+.volume-slider::-moz-range-thumb {
+  width:20px;
+  height:20px;
+  border:3px solid #fff;
+  border-radius:50%;
+  background:var(--purple);
+  box-shadow:0 0 18px rgba(123,97,255,0.8);
+}
 
 .piano-wrap { position:relative; border-radius:10px; overflow:hidden; }
 .white-keys { display:flex; gap:2px; }
@@ -311,6 +426,22 @@ header {
     </div>
   </div>
 
+  <!-- Voice equalizer -->
+  <div class="eq-card">
+    <div class="eq-head">
+      <div class="eq-title">Voice Energy</div>
+      <div class="eq-status" id="eqStatus">idle</div>
+    </div>
+    <div class="eq-bars" id="eqBars" aria-label="Voice equalizer">
+      <span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span>
+      <span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span>
+      <span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span>
+      <span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span>
+      <span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span>
+      <span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span>
+    </div>
+  </div>
+
   <!-- Pitch trail -->
   <div class="trail-card">
     <canvas id="trailCanvas"></canvas>
@@ -322,6 +453,22 @@ header {
     <div class="legend">
       <span><span class="dot g"></span>In Key</span>
       <span><span class="dot r"></span>Off Key</span>
+    </div>
+    <div class="volume-control">
+      <div class="volume-row">
+        <div class="volume-label">Piano Volume</div>
+        <div class="volume-value" id="pianoVolumeValue">85%</div>
+      </div>
+      <input
+        class="volume-slider"
+        id="pianoVolume"
+        type="range"
+        min="0"
+        max="100"
+        value="85"
+        oninput="setPianoVolume(this.value)"
+        aria-label="Piano volume"
+      >
     </div>
     <div class="piano-wrap">
       <div class="white-keys" id="wkeys"></div>
@@ -603,6 +750,28 @@ function midiToFreq(midi) {
   return 440 * Math.pow(2, (midi - 69) / 12);
 }
 
+const PIANO_VOLUME_KEY = 'singlo_piano_volume';
+let pianoVolume = 0.85;
+
+function loadPianoVolume() {
+  const saved = parseFloat(localStorage.getItem(PIANO_VOLUME_KEY));
+  if (!Number.isNaN(saved)) pianoVolume = Math.max(0, Math.min(1, saved));
+  const slider = document.getElementById('pianoVolume');
+  if (slider) slider.value = Math.round(pianoVolume * 100);
+  updatePianoVolumeLabel();
+}
+
+function setPianoVolume(value) {
+  pianoVolume = Math.max(0, Math.min(1, Number(value) / 100));
+  localStorage.setItem(PIANO_VOLUME_KEY, pianoVolume.toString());
+  updatePianoVolumeLabel();
+}
+
+function updatePianoVolumeLabel() {
+  const label = document.getElementById('pianoVolumeValue');
+  if (label) label.textContent = Math.round(pianoVolume * 100) + '%';
+}
+
 function playNote(midi) {
   // Create a fresh AudioContext if none exists yet (browser requires user gesture)
   const actx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
@@ -614,9 +783,11 @@ function playNote(midi) {
 
   const master = actx.createGain();
   master.connect(actx.destination);
+  const peak = 0.85 * pianoVolume;
+  const decay = 0.34 * pianoVolume;
   master.gain.setValueAtTime(0.001, now);
-  master.gain.linearRampToValueAtTime(0.45, now + 0.008);  // fast attack
-  master.gain.exponentialRampToValueAtTime(0.18, now + 0.3); // decay
+  master.gain.linearRampToValueAtTime(Math.max(0.001, peak), now + 0.008);  // fast attack
+  master.gain.exponentialRampToValueAtTime(Math.max(0.001, decay), now + 0.3); // decay
   master.gain.exponentialRampToValueAtTime(0.001, now + 1.8); // release
 
   // Fundamental (triangle — warm tone)
@@ -662,6 +833,7 @@ function playNote(midi) {
 let audioCtx, analyser, micStream, rafId;
 let running = false;
 const BUF_SIZE = 2048;
+let frequencyBuf;
 
 async function toggleMic() {
   running ? stopMic() : await startMic();
@@ -669,20 +841,37 @@ async function toggleMic() {
 
 async function startMic() {
   try {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      throw new Error('This browser does not expose microphone access on this page.');
+    }
     micStream = await navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: false }
     });
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     analyser = audioCtx.createAnalyser();
     analyser.fftSize = BUF_SIZE;
+    frequencyBuf = new Uint8Array(analyser.frequencyBinCount);
     audioCtx.createMediaStreamSource(micStream).connect(analyser);
     running = true;
     document.getElementById('micBtn').className = 'mic-btn on';
     document.getElementById('micBtn').textContent = '⏹ Stop Listening';
+    setEqualizerLive(true);
     loop();
   } catch(e) {
-    alert('Microphone access is required. Please allow mic permission and try again.');
+    showMicError(e);
   }
+}
+
+function showMicError(e) {
+  const name = e?.name || 'MicError';
+  const message = e?.message || 'Microphone access failed.';
+  const ns = document.getElementById('noteStatus');
+  ns.textContent = name + ': ' + message;
+  ns.className = 'note-status out-key';
+  document.getElementById('micBtn').className = 'mic-btn';
+  document.getElementById('micBtn').innerHTML = '🎤 Try Mic Again';
+  resetEqualizer();
+  console.error('Singlo microphone error:', name, message);
 }
 
 function stopMic() {
@@ -694,13 +883,51 @@ function stopMic() {
   document.getElementById('micBtn').innerHTML = '🎤 Tap to Start Singing';
   clearKeys();
   setDisplay(null);
+  resetEqualizer();
   pushTrail(null, false);
 }
 
 const floatBuf = new Float32Array(BUF_SIZE);
 
+function setEqualizerLive(isLive) {
+  document.getElementById('eqBars').classList.toggle('live', isLive);
+  const status = document.getElementById('eqStatus');
+  status.textContent = isLive ? 'live' : 'idle';
+  status.classList.toggle('live', isLive);
+}
+
+function updateEqualizer() {
+  if (!analyser || !frequencyBuf) return;
+  analyser.getByteFrequencyData(frequencyBuf);
+
+  const bars = document.querySelectorAll('.eq-bar');
+  const usableBins = Math.floor(frequencyBuf.length * 0.45);
+  const binsPerBar = Math.max(1, Math.floor(usableBins / bars.length));
+
+  bars.forEach((bar, i) => {
+    let sum = 0;
+    const start = i * binsPerBar;
+    for (let j = 0; j < binsPerBar; j++) {
+      sum += frequencyBuf[start + j] || 0;
+    }
+    const avg = sum / binsPerBar;
+    const height = Math.max(8, Math.min(70, 8 + (avg / 255) * 72));
+    bar.style.height = height + 'px';
+    bar.style.opacity = Math.max(0.45, Math.min(1, 0.35 + avg / 210));
+  });
+}
+
+function resetEqualizer() {
+  setEqualizerLive(false);
+  document.querySelectorAll('.eq-bar').forEach(bar => {
+    bar.style.height = '';
+    bar.style.opacity = '';
+  });
+}
+
 function loop() {
   analyser.getFloatTimeDomainData(floatBuf);
+  updateEqualizer();
   const freq = detectPitch(floatBuf, audioCtx.sampleRate);
 
   if (freq > 0) {
@@ -840,6 +1067,7 @@ function closeBeltUp() {
 const _origLoop = loop;
 function loop() {
   analyser.getFloatTimeDomainData(floatBuf);
+  updateEqualizer();
   const freq = detectPitch(floatBuf, audioCtx.sampleRate);
   if (freq > 0) {
     const note = freqToNote(freq);
@@ -876,6 +1104,7 @@ function stopMic() {
   document.getElementById('micBtn').innerHTML = '🎤 Tap to Start Singing';
   clearKeys();
   setDisplay(null);
+  resetEqualizer();
   pushTrail(null, false);
 }
 
@@ -889,6 +1118,7 @@ function stopMic() {
 })();
 
 buildPiano();
+loadPianoVolume();
 drawTrail();
 window.addEventListener('resize', () => { buildPiano(); drawTrail(); });
 </script>
