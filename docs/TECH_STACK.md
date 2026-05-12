@@ -6,6 +6,19 @@ Singlo should stay browser-first, lightweight, and safe. The first public builds
 
 Use the simplest stack that lets us ship, test, and post progress publicly.
 
+## Swappable Architecture Principle
+
+Build the first game as interchangeable layers:
+
+- audio engine: normalized voice events such as energy, pitch, onset, sustain, and contour
+- skill rules: belt criteria and thresholds that consume voice events
+- game wrappers: scenes such as Light Up The Stage, Sound Garden, and Rhythm Echo
+- visual rewards: lights, paint, shimmer, bursts, and finale effects
+- content packs: language strings, prompts, melodies, and spoken-word lines
+- storage adapters: local progress now, cloud profiles later
+
+Game wrappers should not own the belt rules. Belt rules should not own the visuals. This keeps the product easy to tune or swap after real kid testing.
+
 ## Recommended Stack By Stage
 
 | Stage | Layer | Choice | Why |
@@ -13,6 +26,7 @@ Use the simplest stack that lets us ship, test, and post progress publicly.
 | Now | Frontend | Vanilla HTML/CSS/JS | Current prototype is small and easy to inspect. |
 | Next | Frontend | Vite + TypeScript | Better structure without the weight of a full app framework. |
 | Now | Pitch/audio | Web Audio API in browser | Keeps raw voice local by default. |
+| Later, if useful | Audio helpers | Tone.js or Howler.js | Only add a small library if native Web Audio becomes painful for playback, effects, or sequencing. |
 | Now | Visuals | HTML/CSS/canvas | Fast enough for first mini games and easy to ship. |
 | Later | 3D stages | Three.js | Best fit for virtual stages/concert spaces. |
 | Now | Storage | localStorage / IndexedDB | No login needed for first play. |
@@ -29,11 +43,13 @@ Use the simplest stack that lets us ship, test, and post progress publicly.
 - Do not store raw child voice by default.
 - Do not add Supabase before cloud progress or leaderboards are truly needed.
 - Do not add live WebRTC rooms before the solo game loop is fun.
+- Do not add Tone.js, Howler.js, or a game engine until the first native browser version shows a real need.
 - Do not use Next.js unless the product needs server-rendered pages, accounts, dashboards, or API routes.
 
 ## Security And Privacy Defaults
 
 - Pitch detection runs in the browser.
+- Short echo/playback experiments stay in temporary browser memory and are cleared after playback or page refresh.
 - First play works as a guest.
 - Kids mode has no open chat.
 - Multiplayer uses room codes first.
@@ -54,7 +70,7 @@ Use the simplest stack that lets us ship, test, and post progress publicly.
 
 1. Project kickoff docs and first-page prototype.
 2. Pitch trainer improvements: equalizer, volume, clearer feedback.
-3. Kids first mini game: Hit The Note.
+3. Kids first mini game: Light Up The Stage with Sound Painting.
 4. White Belt to Yellow Belt criteria.
 5. Shareable performance card.
 6. Build-in-public feedback post assets.

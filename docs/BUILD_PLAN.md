@@ -73,6 +73,54 @@ Examples:
 
 The player earns points for trying, staying in key, holding notes, matching pitch, matching rhythm, and completing practice streaks. The game should reward effort and consistency before perfection.
 
+## Kids First Interaction Insight
+
+The first natural hook we observed was the piano. A child saw the prototype and immediately started tapping piano keys before singing. Kids mode should use the piano as the entry point and gently bridge from tapping notes to vocal imitation.
+
+Detailed kids product decisions live in `docs/KIDS_BUILD_BRIEF.md`.
+
+Design principle:
+
+- Tap piano key.
+- Hear note.
+- Make any sound.
+- Hum the note.
+- Sing the note.
+- Hold the note.
+- Copy a tiny melody.
+
+Speaking, humming, and vocal exploration should all make something happen. Singing on pitch should create extra magic, but the game should not feel like it fails if a child only taps, speaks, or hums.
+
+First mini-game candidate: **Light Up The Stage with Sound Painting**.
+
+- Tap a piano key to light a target.
+- Any voice sound wakes up the stage.
+- Humming close to the note brightens the lights.
+- High and low sounds paint different paths across the screen.
+- Holding the hum splashes paint or color across the screen.
+- Matching pitch triggers the biggest stage reaction.
+- Feedback should be gentle: more magic when closer, not harsh failure when off.
+
+## Kids Mechanics To Test
+
+The kids build should respect different comfort levels with voice. A player should be able to start with tapping, speaking, humming, or singing. The game can then gently invite more controlled singing without making the first moment feel like a test.
+
+Strong candidate mechanics:
+
+- Light Up The Stage with Sound Painting: the first likely mini game. Piano taps, sound energy, humming, held notes, and pitch matching all control stage lights, color, and motion.
+- Echo Bubble: an optional local-only playback moment where the game records a very short sound in memory, plays it back with a playful effect, then forgets it. This should be opt-in, parent-safe, and never uploaded in the kids build.
+- Sound Garden: a later or alternate wrapper where a tap starts a visual object, humming grows it, and closer pitch makes it bloom with stronger color.
+- Rhythm Echo: the game plays a tiny two-note or two-beat phrase, then the player copies it by humming, singing, clapping, or speaking rhythmically.
+- Voice platformer: soft sound moves, louder sound jumps, and pitch height changes path. This is promising, but should come after the first stage loop because it can become noisy fast.
+
+Free play vs level structure should be a hybrid:
+
+- First screen: open-ended free play so kids can discover that the piano and microphone make things happen.
+- Optional round: a 30-60 second "show" with one clear goal and a gentle finish.
+- Progression: reward completion, trying, steady sound, and pitch closeness separately.
+
+This gives the player freedom first and gives the game enough structure to award belts, show progress, and create shareable moments.
+
 ## Singing Fundamentals To Gamify
 
 Research and refine this list before building each module, but the first curriculum should cover:
@@ -91,23 +139,46 @@ Research and refine this list before building each module, but the first curricu
 
 Every fundamental needs a game action. If the exercise is boring by itself, the screen should make the sound do something funny, visual, or satisfying.
 
+## Swappable Game Architecture
+
+Singlo should be built in interchangeable parts so weak ideas can be replaced without rebuilding the whole product.
+
+Keep these layers separate:
+
+- Audio engine: microphone permission, voice energy, pitch, onset, sustain, rhythm.
+- Skill rules: belt thresholds, Practice Sparks, Mastery Stars, Show Passes.
+- Mini-game wrapper: Light Up The Stage, Sound Garden, Rhythm Echo, and future modes.
+- Visual reward system: lights, paint, shimmer, bursts, equalizer, finales.
+- Content packs: language, prompts, phrases, songs, spoken-word lines.
+- Progress storage: local progress first, cloud progress later.
+
+If a mini game does not work with real kids, keep the engine and belt rules, then swap the wrapper.
+
 ## Belt Progression
 
-Belts should represent real growth, not only XP totals. The current XP system is a useful placeholder, but the next plan should combine XP with skill gates.
+Belts should represent real growth, not only XP totals. The current XP system is a useful placeholder, but promotion should combine effort with skill gates.
 
-Draft belt criteria:
+Detailed kids promotion criteria live in `docs/KIDS_BELT_CRITERIA.md`.
+
+Kids belts use an 11-step promotion model. Practice can earn XP and rewards, but promotion requires mastery:
+
+- 7 Practice Sparks for trying the skill.
+- 3 Mastery Stars for meeting age-appropriate thresholds.
+- 1 Show Pass for a short performance that combines the belt skill with earlier skills.
+
+Draft kids belt path:
 
 | Belt | Player Meaning | Example Criteria |
 |---|---|---|
-| White | first voice control | complete first warmup, detect mic, copy 3 notes |
-| Yellow | basic pitch matching | hit target notes within a forgiving range several times |
-| Orange | steady voice | hold notes for 3-5 seconds, complete simple melody games |
-| Green | range exploration | sing low/mid/high notes, complete easy scale paths |
-| Blue | rhythm and control | match pitch plus timing in short call-and-response games |
-| Purple | performance practice | complete mini audition shows and save performance cards |
-| Red | advanced consistency | maintain stronger accuracy over longer practice sessions |
-| Brown | stage readiness | complete show sets, range challenges, and confidence drills |
-| Black | mastery path | complete major modules and unlock pro-track performance spaces |
+| White | voice activation | make intentional sounds and trigger the stage |
+| Yellow | pitch awareness | move voice toward single target notes |
+| Orange | steady sound and breath | hold relaxed hums or notes for 3-5 seconds |
+| Green | range exploration | slide low-to-high and high-to-low safely |
+| Blue | rhythm and short sounds | make short voice sounds in time with a beat |
+| Purple | vowels and diction | shape voice into vowel chains and clear sounds |
+| Red | melody chunks | copy tiny musical phrases by contour and rhythm |
+| Brown | dynamics and expression | control soft, medium, and strong voice without shouting |
+| Black | age-band stage ready | complete a consistent age-appropriate performance using several learned skills |
 
 Belts should unlock new worlds and stages, not just badges.
 
@@ -188,13 +259,15 @@ Goal: one delightful browser game using the current pitch engine.
 - Keep one-page instant play.
 - Add Kids 5-12 mode as the default test slice.
 - Replace tool-like pitch trainer framing with a voice game.
-- Build one mini game: sing to move, jump, glow, or score.
+- Build one mini game: Light Up The Stage with Sound Painting.
+- Treat humming and voice exploration as valid first actions, not failed singing.
 - Use forgiving pitch detection and clear visual feedback.
 - Add an equalizer-style voice visualizer so the mic feels alive even before scoring is perfect.
+- Keep any echo/playback feature local in browser memory only.
 - Award belt progress for completion and effort.
 - Create a 30-60 second play session.
 
-Ship when: a kid can tap mic, make sound, see the game react, finish one round, and earn progress.
+Ship when: a kid can tap piano keys, make sound or hum, see the stage react, paint with voice, finish one round, and earn progress.
 
 ### Stage 2: Pop Star Dojo Identity
 
@@ -300,6 +373,7 @@ Ship when: Singlo can run a meaningful virtual concert event.
 
 - The early kids demo should not require accounts.
 - Avoid collecting child names, voice recordings, or personal data unless there is a clear privacy plan.
+- If the game records a short echo/playback, keep it in temporary browser memory only and clear it after playback or page refresh.
 - Store only local progress at first.
 - If leaderboards are added for kids, use anonymous display names or parent-controlled accounts.
 - Do not market Singlo as therapy or promise speech outcomes.
@@ -307,20 +381,23 @@ Ship when: Singlo can run a meaningful virtual concert event.
 
 ## Immediate Next Decisions
 
-1. What is the first kids mini game?
-2. What should the first screen show: mic, avatar, song, stage, or belt?
-3. What exact criteria move a player from White Belt to Yellow Belt?
-4. What two landing-page concepts should be posted publicly?
-5. What is the first 10-second TikTok/X demo?
-6. What are the first three non-English languages to prototype?
+1. Confirm the first kids mini game: Light Up The Stage with Sound Painting.
+2. Confirm whether the first kids loop starts with free play, a short round, or the hybrid structure above.
+3. What should the first screen show: mic, avatar, song, stage, or belt?
+4. What exact criteria move a player from White Belt to Yellow Belt?
+5. What two landing-page concepts should be posted publicly?
+6. What is the first 10-second TikTok/X demo?
+7. What are the first three non-English languages to prototype?
 
 ## Current Code Baseline
 
 The repo currently has:
 
 - home UI in `web/index.html`
+- kids first-play game in `web/kids.html`
 - pitch trainer in `web/pitch.html`
 - belt journey in `web/badges.html`
+- swappable browser modules in `web/js/`
 - localStorage XP and belt progress
 - Web Audio microphone pitch detection
 - first-pass pitch trainer equalizer visual
@@ -328,4 +405,4 @@ The repo currently has:
 - pitch trail canvas
 - piano key visual feedback and tap-to-play notes
 
-Next code work should convert the pitch trainer from a tool into the first Singlo Pop Star Dojo mini game.
+Next code work should keep improving the kids page while preserving the pitch trainer as a test tool.
