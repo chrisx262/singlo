@@ -1,11 +1,11 @@
-import { SingloAudioEngine, centsToTarget, freqToNote } from './singlo-audio-engine.js?v=4';
+import { SingloAudioEngine, centsToTarget, freqToNote } from './singlo-audio-engine.js?v=5';
 import {
   LANGUAGES,
   applyTranslations,
   getLanguage,
   setLanguage,
   t
-} from './singlo-i18n.js?v=4';
+} from './singlo-i18n.js?v=5';
 import {
   loadKidsProgress,
   recordSession,
@@ -72,7 +72,7 @@ export function initSoundPaintingGame() {
   resizeCanvases();
   renderProgress();
   renderTarget();
-  renderStatus(t('tapPiano'));
+  renderStatus(t('makeSound', state.lang));
   animate();
 
   window.addEventListener('resize', resizeCanvases);
@@ -107,7 +107,7 @@ function setupLanguageSelect() {
     renderTarget();
     renderProgress();
     updateMonitorButton();
-    renderStatus(state.listening ? t('listening', state.lang) : t('tapPiano', state.lang));
+    renderStatus(state.listening ? t('listening', state.lang) : t('makeSound', state.lang));
   });
 }
 
@@ -136,7 +136,7 @@ function handleAudioState(next) {
     ? t('stopMic', state.lang)
     : t('startMic', state.lang);
   document.body.classList.toggle('listening', next.running);
-  renderStatus(next.running ? t('listening', state.lang) : t('tapPiano', state.lang));
+  renderStatus(next.running ? t('listening', state.lang) : t('makeSound', state.lang));
   if (next.running) {
     state.voiceStartedAt = performance.now();
   } else if (state.voiceStartedAt) {
