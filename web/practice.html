@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Singlo 🎯 – Practice</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1A1A2E">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --pink:#FF4F91; --yellow:#FFD93D; --teal:#00C9A7; --purple:#7B61FF;
+    --orange:#FF7043; --dark:#1A1A2E; --card-bg:rgba(255,255,255,0.07); --radius:24px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Nunito',sans-serif;background:var(--dark);color:#fff;min-height:100vh;overflow-x:hidden}
+  .bg{position:fixed;inset:0;z-index:0;overflow:hidden}
+  .blob{position:absolute;border-radius:50%;filter:blur(80px);opacity:.25;animation:float 8s ease-in-out infinite}
+  .blob1{width:500px;height:500px;background:var(--pink);top:-100px;left:-100px}
+  .blob2{width:400px;height:400px;background:var(--purple);bottom:-100px;right:-50px;animation-delay:2s}
+  .blob3{width:300px;height:300px;background:var(--teal);top:40%;left:40%;animation-delay:4s}
+  @keyframes float{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-30px) scale(1.05)}}
+  @media(prefers-reduced-motion:reduce){.blob{animation:none}}
+
+  .wrapper{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:22px 18px 90px}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+  .logo{font-family:'Fredoka One',cursive;font-size:1.4rem}
+  .logo a{color:#fff;text-decoration:none}
+  .xp-hud{background:var(--card-bg);border:1px solid rgba(255,255,255,.1);border-radius:50px;padding:6px 14px;font-weight:800;font-size:.85rem}
+  .xp-hud span{color:var(--yellow)}
+
+  .card{background:var(--card-bg);border:1px solid rgba(255,255,255,.1);border-radius:var(--radius);padding:18px;margin-bottom:16px;backdrop-filter:blur(10px)}
+  .section-label{font-size:.72rem;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.45);margin:4px 0 10px}
+
+  /* belt progress */
+  .beltline{display:flex;justify-content:space-between;font-weight:800;margin-bottom:8px}
+  .beltline .b{font-family:'Fredoka One',cursive}
+  .progress-bar{height:8px;background:rgba(255,255,255,.1);border-radius:50px;overflow:hidden}
+  .progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--purple),var(--pink));border-radius:50px;transition:width .5s}
+
+  /* age cards */
+  .age-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .age-card{background:var(--card-bg);border:2px solid transparent;border-radius:18px;padding:14px 8px;text-align:center;cursor:pointer;transition:transform .15s,border-color .15s}
+  .age-card:hover{transform:translateY(-2px)}
+  .age-card.active{border-color:var(--yellow)}
+  .age-emoji{font-size:1.8rem;display:block}
+  .age-title{font-family:'Fredoka One',cursive;display:block;margin-top:4px}
+  .age-range{font-size:.7rem;font-weight:700;color:rgba(255,255,255,.5)}
+
+  /* exercise */
+  .ex-title{font-family:'Fredoka One',cursive;font-size:1.25rem}
+  .ex-desc{font-size:.85rem;font-weight:700;color:rgba(255,255,255,.6);margin:4px 0 14px}
+  .target-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .note-big{font-family:'Fredoka One',cursive;font-size:3rem;min-width:110px;text-align:center;background:rgba(255,255,255,.08);border-radius:16px;padding:4px 8px}
+  .holdbar{flex:1;min-width:150px;height:22px;background:rgba(255,255,255,.1);border-radius:11px;overflow:hidden}
+  .holdbar div{height:100%;width:0%;background:linear-gradient(90deg,var(--teal),var(--yellow))}
+  .cents{font-weight:800;color:rgba(255,255,255,.6);min-width:100px;font-size:.9rem}
+  .status{margin-top:12px;font-weight:800;min-height:1.5em}
+
+  button{font-family:'Fredoka One',cursive;font-size:1rem;border:none;border-radius:16px;padding:13px 20px;cursor:pointer;color:#fff}
+  .btn-main{background:linear-gradient(135deg,var(--purple),var(--pink));box-shadow:0 6px 20px rgba(123,97,255,.4)}
+  .btn-ghost{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2)}
+  button:disabled{opacity:.45;cursor:default}
+  button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+  .btnrow{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+
+  .coach{margin-top:14px;padding:14px;border-radius:16px;background:rgba(0,201,167,.12);border:1px solid rgba(0,201,167,.35);font-weight:700;display:none;line-height:1.5}
+  .coach.show{display:block}
+  .coach .who{font-family:'Fredoka One',cursive;display:block;margin-bottom:4px;color:var(--teal)}
+
+  /* promotion overlay — same feel as pitch.html beltup */
+  .beltup-overlay{position:fixed;inset:0;background:rgba(26,26,46,.9);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s;z-index:300;padding:18px}
+  .beltup-overlay.show{opacity:1;pointer-events:all}
+  .beltup-card{background:#232345;border:1px solid rgba(255,255,255,.15);border-radius:26px;padding:26px;max-width:460px;width:100%;text-align:center;transform:scale(.9);transition:transform .3s}
+  .beltup-overlay.show .beltup-card{transform:scale(1)}
+  .beltup-title{font-family:'Fredoka One',cursive;font-size:1.6rem;margin-bottom:10px}
+  .beltup-card img{width:100%;border-radius:16px;margin-bottom:14px}
+  .beltup-card .btnrow{justify-content:center}
+
+  .bottom-nav{position:fixed;left:0;right:0;bottom:0;background:rgba(26,26,46,.92);backdrop-filter:blur(12px);border-top:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-around;padding:10px 0;z-index:100}
+  .nav-item{text-align:center;font-size:.65rem;font-weight:800;color:rgba(255,255,255,.5);cursor:pointer;text-decoration:none}
+  .nav-item.active{color:var(--yellow)}
+  .nav-icon{font-size:1.2rem}
+</style>
+</head>
+<body>
+<div class="bg"><div class="blob blob1"></div><div class="blob blob2"></div><div class="blob blob3"></div></div>
+
+<div class="wrapper">
+  <div class="topbar">
+    <div class="logo"><a href="index.html">Singlo <span>🎵</span></a></div>
+    <div class="xp-hud"><span id="hudBelt">🤍</span> <span id="hudXP">0 XP</span></div>
+  </div>
+
+  <div class="card">
+    <div class="beltline"><span class="b" id="beltName">White Belt</span><span id="beltNext"></span></div>
+    <div class="progress-bar"><div class="progress-fill" id="beltFill"></div></div>
+  </div>
+
+  <!-- Part 3: age groups (same ids as index.html) -->
+  <div class="section-label">Who's singing today?</div>
+  <div class="age-cards">
+    <div class="age-card" data-age="kids"><span class="age-emoji">🧸</span><span class="age-title">Kids</span><span class="age-range">Ages 5–10</span></div>
+    <div class="age-card" data-age="teens"><span class="age-emoji">🎮</span><span class="age-title">Teens</span><span class="age-range">Ages 11–17</span></div>
+    <div class="age-card" data-age="adults"><span class="age-emoji">🏆</span><span class="age-title">Pro</span><span class="age-range">Ages 18+</span></div>
+  </div>
+
+  <div class="card" id="exCard" style="display:none;margin-top:16px">
+    <div class="ex-title" id="exTitle"></div>
+    <div class="ex-desc" id="exDesc"></div>
+    <div class="target-row">
+      <div class="note-big" id="targetNote">—</div>
+      <div class="holdbar"><div id="holdFill"></div></div>
+      <div class="cents" id="centsLabel"></div>
+    </div>
+    <div class="status" id="status">Press start when you're ready.</div>
+    <div class="btnrow">
+      <button class="btn-main" id="startEx">▶ Start exercise</button>
+      <button class="btn-ghost" id="hearNote">🔊 Hear it</button>
+      <button class="btn-ghost" id="nextEx" style="display:none">Next →</button>
+    </div>
+    <div class="coach" id="coachBox"><span class="who">🥋 Coach Singlo</span><span id="coachText"></span></div>
+  </div>
+</div>
+
+<!-- Part 2/7: belt-up + share card -->
+<div class="beltup-overlay" id="promoOverlay">
+  <div class="beltup-card">
+    <div class="beltup-title" id="promoTitle">Belt Unlocked!</div>
+    <img id="promoImg" alt="Your new belt card">
+    <div class="btnrow">
+      <button class="btn-main" id="promoTweet">Share on X</button>
+      <button class="btn-ghost" id="promoSave">Save</button>
+      <button class="btn-ghost" id="promoClose">Keep training</button>
+    </div>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <a class="nav-item" href="index.html"><div class="nav-icon">🏠</div>Home</a>
+  <a class="nav-item active" href="practice.html"><div class="nav-icon">🎯</div>Practice</a>
+  <a class="nav-item" href="voice-painting.html"><div class="nav-icon">🎨</div>Paint</a>
+  <a class="nav-item" href="waves.html"><div class="nav-icon">🌊</div>Waves</a>
+  <a class="nav-item" href="choir.html"><div class="nav-icon">🔥</div>Choir</a>
+  <a class="nav-item" href="battle.html"><div class="nav-icon">⚔️</div>Battle</a>
+  <a class="nav-item" href="badges.html"><div class="nav-icon">🏅</div>Badges</a>
+</nav>
+
+<script src="js/singlo-core.js"></script>
+<script src="js/coach.js"></script>
+<script src="js/sharecard.js"></script>
+<script>
+/* ============ Part 3: exercises per age group ============
+   Kids match pitch CLASS (any octave); teens/adults match exact notes. */
+const EXERCISES = {
+  kids: [
+    { title:'🦁 Lion note', desc:'Hum the big lion note and hold it!', xp:20, chromaOnly:true,
+      steps:[{ midi:60, holdSec:2, tolCents:75 }] },
+    { title:'🐦 Little bird', desc:'Now a high little bird note — tweet tweet!', xp:20, chromaOnly:true,
+      steps:[{ midi:67, holdSec:2, tolCents:75 }] },
+    { title:'🚒 Siren slide', desc:'Slide your voice up like a siren: low note, then high note!', xp:25, chromaOnly:true,
+      steps:[{ midi:60, holdSec:1.2, tolCents:80 },{ midi:67, holdSec:1.2, tolCents:80 }] },
+  ],
+  teens: [
+    { title:'Steady 5 🔒', desc:'Hold one note dead steady for 5 seconds.', xp:35,
+      steps:[{ midi:62, holdSec:5, tolCents:50 }] },
+    { title:'Interval jump 🪜', desc:'Sing the first note, then jump a major third up.', xp:35,
+      steps:[{ midi:60, holdSec:2, tolCents:50 },{ midi:64, holdSec:2, tolCents:50 }] },
+    { title:'Scale climb 🧗', desc:'Climb 5 notes: C D E F G. Breathe between notes.', xp:45,
+      steps:[60,62,64,65,67].map(m=>({ midi:m, holdSec:1.2, tolCents:55 })) },
+  ],
+  adults: [
+    { title:'Cents sniper 🎯', desc:'Hold A3 within ±20 cents for 3 seconds.', xp:50,
+      steps:[{ midi:57, holdSec:3, tolCents:20 }] },
+    { title:'Octave leap 🦘', desc:'C3 then C4 — clean leap, no scooping.', xp:50,
+      steps:[{ midi:48, holdSec:2, tolCents:30 },{ midi:60, holdSec:2, tolCents:30 }] },
+    { title:'Long sustain 🌬️', desc:'10-second sustain. Watch drift at the end of the breath.', xp:60,
+      steps:[{ midi:55, holdSec:10, tolCents:35 }] },
+  ],
+};
+
+const $ = id => document.getElementById(id);
+const S = window.Singlo;
+let mic = null, exIndex = 0, session = null;
+let ageGroup = S.getProgress().ageGroup || '';
+
+/* ---------- HUD / belt bar ---------- */
+function renderBelt() {
+  const p = S.getProgress();
+  $('hudBelt').textContent = p.belt.emoji;
+  $('hudXP').textContent = p.xp.toLocaleString() + ' XP';
+  $('beltName').textContent = p.belt.emoji + ' ' + p.belt.name;
+  if (p.next) {
+    $('beltNext').textContent = (p.next.xp - p.xp).toLocaleString() + ' XP to ' + p.next.name;
+    $('beltFill').style.width = Math.min(100, ((p.xp - p.belt.xp) / (p.next.xp - p.belt.xp)) * 100) + '%';
+  } else {
+    $('beltNext').textContent = 'Max belt 🖤';
+    $('beltFill').style.width = '100%';
+  }
+}
+renderBelt();
+
+/* ---------- age selection ---------- */
+document.querySelectorAll('.age-card').forEach(el => {
+  if (el.dataset.age === ageGroup) el.classList.add('active');
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.age-card').forEach(a => a.classList.remove('active'));
+    el.classList.add('active');
+    ageGroup = el.dataset.age;
+    S.setPref('ageGroup', ageGroup);
+    exIndex = 0;
+    loadExercise();
+  });
+});
+if (ageGroup) loadExercise();
+
+function loadExercise() {
+  const ex = EXERCISES[ageGroup][exIndex % EXERCISES[ageGroup].length];
+  $('exCard').style.display = 'block';
+  $('exTitle').textContent = ex.title;
+  $('exDesc').textContent = ex.desc;
+  $('targetNote').textContent = ex.chromaOnly ? S.chromaName(ex.steps[0].midi) : S.noteName(ex.steps[0].midi);
+  $('holdFill').style.width = '0%';
+  $('centsLabel').textContent = '';
+  $('status').textContent = "Press start when you're ready.";
+  $('nextEx').style.display = 'none';
+  $('coachBox').classList.remove('show');
+  $('startEx').disabled = false;
+}
+
+/* ---------- exercise engine ---------- */
+async function ensureMic() { if (!mic) mic = await S.startMic(onSample); }
+
+$('hearNote').addEventListener('click', async () => {
+  try { await ensureMic(); } catch(e){ $('status').textContent = 'Allow the microphone to play.'; return; }
+  const ex = EXERCISES[ageGroup][exIndex % EXERCISES[ageGroup].length];
+  const step = session ? session.steps[session.stepIdx] : ex.steps[0];
+  S.playTone(mic.ctx, step.midi, 1.0);
+});
+
+$('startEx').addEventListener('click', async () => {
+  try { await ensureMic(); }
+  catch(e){ $('status').textContent = 'Microphone blocked — allow mic access to play.'; return; }
+  const ex = EXERCISES[ageGroup][exIndex % EXERCISES[ageGroup].length];
+  session = { ex, steps: ex.steps, stepIdx: 0, held: 0, last: performance.now(),
+              samples: 0, hits: 0, centsSum: 0, maxHold: 0, weak: {} };
+  $('startEx').disabled = true;
+  $('status').textContent = 'Listening… sing the note!';
+  showStep();
+});
+
+function showStep() {
+  const st = session.steps[session.stepIdx];
+  $('targetNote').textContent = session.ex.chromaOnly ? S.chromaName(st.midi) : S.noteName(st.midi);
+  $('holdFill').style.width = '0%';
+  session.held = 0;
+}
+
+function onSample(s) {
+  if (!session) { if (!s.silent) $('centsLabel').textContent = s.name; return; }
+  const now = performance.now();
+  const dt = Math.min((now - session.last) / 1000, 0.1);
+  session.last = now;
+  const st = session.steps[session.stepIdx];
+
+  let match = false, dev = null;
+  if (!s.silent) {
+    session.samples++;
+    if (session.ex.chromaOnly) {
+      const targetChroma = ((st.midi % 12) + 12) % 12;
+      if (s.chroma === targetChroma && Math.abs(s.cents) <= st.tolCents) { match = true; dev = s.cents; }
+    } else {
+      dev = Math.round((s.midi - st.midi) * 100);
+      if (Math.abs(dev) <= st.tolCents) match = true;
+    }
+    $('centsLabel').textContent = s.name + (dev !== null ? ` (${dev > 0 ? '+' : ''}${dev}¢)` : '');
+  }
+
+  if (match) {
+    session.hits++; session.centsSum += dev; session.held += dt;
+    session.maxHold = Math.max(session.maxHold, session.held);
+    $('holdFill').style.width = Math.min(100, (session.held / st.holdSec) * 100) + '%';
+    $('status').textContent = 'Locked in — keep holding! 🎯';
+    if (session.held >= st.holdSec) {
+      session.stepIdx++;
+      if (session.stepIdx >= session.steps.length) return finishExercise();
+      $('status').textContent = 'Nice! Next note…';
+      showStep();
+    }
+  } else if (!s.silent) {
+    const key = S.noteName(st.midi);
+    session.weak[key] = (session.weak[key] || 0) + 1;
+    // gentle decay, never a hard reset — kinder for kids & autistic users
+    session.held = Math.max(0, session.held - dt * 0.5);
+    $('holdFill').style.width = Math.min(100, (session.held / st.holdSec) * 100) + '%';
+    $('status').textContent = ageGroup === 'kids' ? 'Almost! Slide your voice a little…' : 'Adjust toward the target…';
+  }
+}
+
+async function finishExercise() {
+  const ex = session.ex;
+  const accuracy = session.samples ? Math.round((session.hits / session.samples) * 100) : 0;
+  const avgCents = session.hits ? Math.round(session.centsSum / session.hits) : 0;
+  const weakNotes = Object.entries(session.weak).sort((a,b)=>b[1]-a[1]).slice(0,2).map(e=>e[0]);
+  const summary = { ageGroup, exercise: ex.title, accuracy, avgCents,
+                    maxHoldSec: Math.round(session.maxHold * 10) / 10, weakNotes };
+  session = null;
+  $('status').textContent = `✅ Complete! +${ex.xp} XP`;
+  $('nextEx').style.display = 'inline-block';
+
+  const result = S.addXP(ex.xp);        // writes to singlo_progress — shared with pitch.html & badges.html
+  renderBelt();
+  if (result.promoted) showPromotion(result.belt);
+
+  $('coachText').textContent = 'thinking…';
+  $('coachBox').classList.add('show');
+  $('coachText').textContent = await SingloCoach.getFeedback(summary);
+}
+
+$('nextEx').addEventListener('click', () => { exIndex++; loadExercise(); });
+
+/* ---------- Part 7: promotion + share card ---------- */
+let currentCard = null;
+function showPromotion(belt) {
+  const p = S.getProgress();
+  currentCard = SingloShare.beltCard({ name: p.name || 'A Singlo singer', belt, xp: p.xp });
+  $('promoTitle').textContent = belt.emoji + ' ' + belt.name + ' Unlocked!';
+  $('promoImg').src = currentCard.dataUrl;
+  $('promoOverlay').classList.add('show');
+}
+$('promoTweet').addEventListener('click', () => currentCard && currentCard.tweet());
+$('promoSave').addEventListener('click', () => currentCard && currentCard.download());
+$('promoClose').addEventListener('click', () => $('promoOverlay').classList.remove('show'));
+
+/* ---------- Part 6: PWA ---------- */
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>

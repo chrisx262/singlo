@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Singlo ⚔️ – Pitch Battle</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1A1A2E">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+<style>
+  :root{--pink:#FF4F91;--yellow:#FFD93D;--teal:#00C9A7;--purple:#7B61FF;--dark:#1A1A2E;--card-bg:rgba(255,255,255,0.07);--radius:24px}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Nunito',sans-serif;background:var(--dark);color:#fff;min-height:100vh;overflow-x:hidden}
+  .bg{position:fixed;inset:0;z-index:0;overflow:hidden}
+  .blob{position:absolute;border-radius:50%;filter:blur(80px);opacity:.25;animation:float 8s ease-in-out infinite}
+  .blob1{width:460px;height:460px;background:var(--pink);top:-120px;left:-120px}
+  .blob2{width:380px;height:380px;background:var(--purple);bottom:-100px;right:-60px;animation-delay:2s}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-30px)}}
+  @media(prefers-reduced-motion:reduce){.blob{animation:none}}
+
+  .wrapper{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:22px 18px 90px}
+  .logo{font-family:'Fredoka One',cursive;font-size:1.4rem;margin-bottom:14px}
+  .logo a{color:#fff;text-decoration:none}
+  .card{background:var(--card-bg);border:1px solid rgba(255,255,255,.1);border-radius:var(--radius);padding:18px;margin-bottom:16px;backdrop-filter:blur(10px)}
+
+  input{font-family:'Nunito';font-weight:800;font-size:1.05rem;padding:12px 14px;border:2px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);border-radius:14px;width:100%;color:#fff}
+  input::placeholder{color:rgba(255,255,255,.4)}
+  input:focus{outline:none;border-color:var(--yellow)}
+  button{font-family:'Fredoka One',cursive;font-size:1rem;border:none;border-radius:16px;padding:13px 20px;cursor:pointer;color:#fff;width:100%}
+  .btn-main{background:linear-gradient(135deg,var(--purple),var(--pink));box-shadow:0 6px 20px rgba(123,97,255,.4)}
+  .btn-ghost{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2)}
+  button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+  .row{display:flex;gap:10px;margin-top:10px}
+  .row>*{flex:1}
+  .code{font-family:'Fredoka One',cursive;font-size:2.2rem;letter-spacing:.3em;text-align:center;background:rgba(255,255,255,.08);border-radius:14px;padding:10px;margin-top:8px}
+  .hidden{display:none}
+  .status{font-weight:800;color:rgba(255,255,255,.6);margin-top:10px;text-align:center;min-height:1.4em}
+
+  .target-note{font-family:'Fredoka One',cursive;font-size:4rem;text-align:center}
+  .timer{text-align:center;font-weight:900;color:var(--yellow);font-size:1.2rem;min-height:1.4em}
+  .roundlabel{text-align:center;font-weight:800;color:rgba(255,255,255,.6)}
+  .meter{margin-top:14px}
+  .meter label{font-weight:800;display:flex;justify-content:space-between;font-size:.9rem}
+  .lane{position:relative;height:34px;background:rgba(255,255,255,.1);border-radius:17px;margin-top:5px}
+  .lane .center{position:absolute;left:50%;top:0;bottom:0;width:3px;background:var(--teal);border-radius:2px}
+  .needle{position:absolute;top:3px;width:28px;height:28px;border-radius:50%;left:50%;transform:translateX(-50%);transition:left .08s linear}
+  .needle.me{background:var(--yellow);box-shadow:0 0 12px var(--yellow)}
+  .needle.them{background:var(--pink);box-shadow:0 0 12px var(--pink)}
+  .scoreline{display:flex;justify-content:space-around;font-weight:900;font-size:1.1rem;margin-top:14px}
+  .winner{font-family:'Fredoka One',cursive;font-size:1.5rem;text-align:center;margin-top:10px;color:var(--yellow)}
+
+  .bottom-nav{position:fixed;left:0;right:0;bottom:0;background:rgba(26,26,46,.92);backdrop-filter:blur(12px);border-top:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-around;padding:10px 0;z-index:100}
+  .nav-item{text-align:center;font-size:.65rem;font-weight:800;color:rgba(255,255,255,.5);cursor:pointer;text-decoration:none}
+  .nav-item.active{color:var(--yellow)}
+  .nav-icon{font-size:1.2rem}
+</style>
+</head>
+<body>
+<div class="bg"><div class="blob blob1"></div><div class="blob blob2"></div></div>
+
+<div class="wrapper">
+  <div class="logo"><a href="index.html">Singlo <span>🎵</span></a> ⚔️ Pitch Battle</div>
+
+  <!-- lobby -->
+  <div class="card" id="lobby">
+    <input id="playerName" placeholder="Your name" maxlength="16">
+    <div class="row"><button class="btn-main" id="quickBtn">⚡ Quick Match — battle a stranger</button></div>
+    <div class="row"><button class="btn-ghost" id="createBtn">Create private room</button></div>
+    <div class="row">
+      <input id="joinCode" placeholder="ROOM CODE" maxlength="4" style="text-transform:uppercase">
+      <button class="btn-ghost" id="joinBtn">Join</button>
+    </div>
+    <div class="status" id="lobbyStatus"></div>
+    <div id="codeBox" class="hidden">
+      <p class="status">Share this code with your opponent:</p>
+      <div class="code" id="roomCode"></div>
+    </div>
+  </div>
+
+  <!-- battle -->
+  <div class="card hidden" id="battle">
+    <div class="roundlabel" id="roundLabel">Round 1 / 5</div>
+    <div class="target-note" id="targetNote">—</div>
+    <div class="timer" id="timer"></div>
+    <div class="meter">
+      <label><span>You</span><span id="meAcc">0%</span></label>
+      <div class="lane"><div class="center"></div><div class="needle me" id="meNeedle"></div></div>
+    </div>
+    <div class="meter">
+      <label><span>Opponent</span><span></span></label>
+      <div class="lane"><div class="center"></div><div class="needle them" id="themNeedle"></div></div>
+    </div>
+    <div class="scoreline" id="scores"></div>
+    <div class="winner" id="winner"></div>
+    <div class="status" id="battleStatus"></div>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <a class="nav-item" href="index.html"><div class="nav-icon">🏠</div>Home</a>
+  <a class="nav-item" href="practice.html"><div class="nav-icon">🎯</div>Practice</a>
+  <a class="nav-item" href="voice-painting.html"><div class="nav-icon">🎨</div>Paint</a>
+  <a class="nav-item" href="waves.html"><div class="nav-icon">🌊</div>Waves</a>
+  <a class="nav-item" href="choir.html"><div class="nav-icon">🔥</div>Choir</a>
+  <a class="nav-item active" href="battle.html"><div class="nav-icon">⚔️</div>Battle</a>
+  <a class="nav-item" href="badges.html"><div class="nav-icon">🏅</div>Badges</a>
+</nav>
+
+<script src="js/singlo-core.js"></script>
+<script>
+// Point this at your deployed Fly.io server in production
+const SERVER_URL = location.hostname === 'localhost' ? 'http://localhost:3001' : 'https://YOUR-APP.fly.dev';
+const socket = io(SERVER_URL);
+const $ = id => document.getElementById(id);
+const S = window.Singlo;
+
+let mic = null, target = null, tolCents = 50;
+let roundSamples = 0, roundHits = 0, roundActive = false;
+
+async function ensureMic() {
+  if (mic) return;
+  mic = await S.startMic(s => {
+    if (s.silent || target === null) return;
+    const dev = (s.midi - target) * 100;
+    setNeedle('meNeedle', dev);
+    socket.emit('pitch', { dev: Math.round(dev) });
+    if (roundActive) {
+      roundSamples++;
+      if (Math.abs(dev) <= tolCents) roundHits++;
+      const acc = Math.round((roundHits / roundSamples) * 100);
+      $('meAcc').textContent = acc + '%';
+      socket.emit('round_score', { accuracy: acc });
+    }
+  });
+}
+
+function setNeedle(id, dev) {
+  const pct = 50 + Math.max(-50, Math.min(50, dev / 2)); // ±100¢ lane
+  $(id).style.left = pct + '%';
+}
+
+$('quickBtn').addEventListener('click', async () => {
+  try { await ensureMic(); } catch(e){ $('lobbyStatus').textContent = 'Mic access needed to battle.'; return; }
+  const name = $('playerName').value || S.getProgress().name || 'Singer';
+  socket.emit('quick_match', { name });
+  $('lobbyStatus').textContent = '⚡ Searching the world for an opponent…';
+});
+socket.on('queued', () => { $('lobbyStatus').textContent = '⚡ In queue — waiting for another singer…'; });
+socket.on('matched', () => { $('lobbyStatus').textContent = 'Matched! Get ready…'; });
+
+$('createBtn').addEventListener('click', async () => {
+  try { await ensureMic(); } catch(e){ $('lobbyStatus').textContent = 'Mic access needed to battle.'; return; }
+  const name = $('playerName').value || S.getProgress().name || 'Player 1';
+  socket.emit('create_room', { name }, ({ code }) => {
+    $('codeBox').classList.remove('hidden');
+    $('roomCode').textContent = code;
+    $('lobbyStatus').textContent = 'Waiting for opponent…';
+  });
+});
+
+$('joinBtn').addEventListener('click', async () => {
+  try { await ensureMic(); } catch(e){ $('lobbyStatus').textContent = 'Mic access needed to battle.'; return; }
+  const code = $('joinCode').value.trim().toUpperCase();
+  const name = $('playerName').value || S.getProgress().name || 'Player 2';
+  socket.emit('join_room', { code, name }, res => {
+    if (res.error) $('lobbyStatus').textContent = res.error;
+  });
+});
+
+socket.on('players', () => {
+  $('lobby').classList.add('hidden');
+  $('battle').classList.remove('hidden');
+});
+
+socket.on('round_start', ({ round, totalRounds, targetMidi, seconds }) => {
+  target = targetMidi;
+  roundSamples = 0; roundHits = 0; roundActive = true;
+  $('roundLabel').textContent = `Round ${round} / ${totalRounds}`;
+  $('targetNote').textContent = S.noteName(targetMidi);
+  $('winner').textContent = '';
+  $('battleStatus').textContent = 'Sing the note!';
+  if (mic) S.playTone(mic.ctx, targetMidi, 0.8);
+  let t = seconds;
+  $('timer').textContent = t + 's';
+  const iv = setInterval(() => {
+    t--; $('timer').textContent = t > 0 ? t + 's' : '';
+    if (t <= 0) { clearInterval(iv); roundActive = false; }
+  }, 1000);
+});
+
+socket.on('opponent_pitch', ({ dev }) => setNeedle('themNeedle', dev));
+
+socket.on('round_result', ({ scores }) => {
+  $('battleStatus').textContent = 'Round over!';
+  $('scores').innerHTML = scores.map(s => `<span>${s.name}: ${s.total}</span>`).join('');
+});
+
+socket.on('battle_over', ({ winner, scores }) => {
+  roundActive = false;
+  $('scores').innerHTML = scores.map(s => `<span>${s.name}: ${s.total}</span>`).join('');
+  $('winner').textContent = winner ? `🏆 ${winner} wins!` : "🤝 It's a tie!";
+  $('battleStatus').textContent = 'Refresh to battle again.';
+  // battle XP: 30 for the winner, 10 for playing — writes to shared singlo_progress
+  const myName = $('playerName').value || S.getProgress().name;
+  S.addXP(winner && winner === myName ? 30 : 10);
+});
+
+socket.on('opponent_left', () => {
+  roundActive = false;
+  $('battleStatus').textContent = 'Opponent left the room.';
+});
+</script>
+</body>
+</html>

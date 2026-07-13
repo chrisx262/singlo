@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Singlo 🎵 – Your AI Voice Coach</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1A1A2E">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -584,7 +586,7 @@
 
   <header>
     <div class="logo">Singlo <span>🎵</span></div>
-    <div class="streak-badge">🔥 7 day streak</div>
+    <div class="streak-badge" id="onlineBadge">🌍 … online</div>
   </header>
 
   <div class="hero">
@@ -646,11 +648,11 @@
       <div class="module-name">Singing</div>
       <div class="module-sub">Pitch · Range · Tone</div>
     </div>
-    <div class="module-card" onclick="openModule('speaking')">
-      <span class="module-level">Lv. 2</span>
-      <span class="module-icon">🗣️</span>
-      <div class="module-name">Speaking</div>
-      <div class="module-sub">Clarity · Pace · Power</div>
+    <div class="module-card" onclick="location.href='waves.html'">
+      <span class="module-level">NEW</span>
+      <span class="module-icon">🌊</span>
+      <div class="module-name">Voice Waves</div>
+      <div class="module-sub">See · Record · Hear yourself</div>
     </div>
     <div class="module-card" onclick="openModule('pronunciation')">
       <span class="module-level">Lv. 1</span>
@@ -663,6 +665,18 @@
       <span class="module-icon">📖</span>
       <div class="module-name">Storytelling</div>
       <div class="module-sub">Expression · Flow</div>
+    </div>
+    <div class="module-card" onclick="location.href='choir.html'">
+      <span class="module-level">LIVE</span>
+      <span class="module-icon">🔥</span>
+      <div class="module-name">Choir Bonfire</div>
+      <div class="module-sub">Harmonize · Worldwide</div>
+    </div>
+    <div class="module-card" onclick="location.href='voice-painting.html'">
+      <span class="module-level">NEW</span>
+      <span class="module-icon">🎨</span>
+      <div class="module-name">Voice Painting</div>
+      <div class="module-sub">Sing · Paint · Poetry</div>
     </div>
   </div>
 
@@ -689,17 +703,17 @@
     <div class="nav-icon">🏠</div>
     <div class="nav-label">Home</div>
   </div>
-  <div class="nav-item">
+  <div class="nav-item" onclick="location.href='practice.html'">
     <div class="nav-icon">🎯</div>
     <div class="nav-label">Practice</div>
   </div>
-  <div class="nav-item">
+  <div class="nav-item" onclick="location.href='badges.html'">
     <div class="nav-icon">🏅</div>
     <div class="nav-label">Badges</div>
   </div>
-  <div class="nav-item">
-    <div class="nav-icon">🌐</div>
-    <div class="nav-label">Community</div>
+  <div class="nav-item" onclick="location.href='battle.html'">
+    <div class="nav-icon">⚔️</div>
+    <div class="nav-label">Battle</div>
   </div>
   <div class="nav-item">
     <div class="nav-icon">👤</div>
@@ -730,6 +744,7 @@
   function selectAge(el, mode) {
     document.querySelectorAll('.age-card').forEach(c => c.classList.remove('active'));
     el.classList.add('active');
+    try { const p = JSON.parse(localStorage.getItem('singlo_progress')) || {}; p.ageGroup = mode; localStorage.setItem('singlo_progress', JSON.stringify(p)); } catch(e) {}
     const labels = { kids: 'Warm-Up Warrior 🧸', teens: 'Warm-Up Warrior 🔥', adults: 'Pro Vocal Drill 💪' };
     document.querySelector('.challenge-title').textContent = labels[mode] || 'Daily Challenge';
     popConfetti(el);
@@ -754,6 +769,22 @@
       this.classList.add('active');
     });
   });
+
+  // live online counter (fails silently if server is down)
+  (function(){
+    const SERVER_URL = location.hostname === 'localhost' ? 'http://localhost:3001' : 'https://YOUR-APP.fly.dev';
+    const sc = document.createElement('script');
+    sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js';
+    sc.onload = () => {
+      try {
+        const sock = io(SERVER_URL);
+        sock.on('online', n => { document.getElementById('onlineBadge').textContent = '🌍 ' + n + ' online'; });
+      } catch(e) {}
+    };
+    document.head.appendChild(sc);
+  })();
+
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
 </html>

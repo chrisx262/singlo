@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Singlo 🔥 – Choir Bonfire</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1A1A2E">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+<style>
+  :root{--pink:#FF4F91;--yellow:#FFD93D;--teal:#00C9A7;--purple:#7B61FF;--orange:#FF7043;--dark:#12122A;--card-bg:rgba(255,255,255,0.07);--radius:24px}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Nunito',sans-serif;background:radial-gradient(ellipse at 50% 100%, #2A1E3E 0%, var(--dark) 60%);color:#fff;min-height:100vh;overflow-x:hidden}
+  .stars{position:fixed;inset:0;z-index:0;pointer-events:none}
+  .star{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;opacity:.5;animation:twinkle 3s ease-in-out infinite}
+  @keyframes twinkle{0%,100%{opacity:.2}50%{opacity:.7}}
+  body.calm .star{animation:none;opacity:.3}
+  @media(prefers-reduced-motion:reduce){.star{animation:none}}
+
+  .wrapper{position:relative;z-index:1;max-width:640px;margin:0 auto;padding:22px 18px 96px}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:8px}
+  .logo{font-family:'Fredoka One',cursive;font-size:1.4rem}
+  .logo a{color:#fff;text-decoration:none}
+  .online{background:var(--card-bg);border:1px solid rgba(255,255,255,.1);border-radius:50px;padding:6px 14px;font-weight:800;font-size:.85rem}
+  .online b{color:var(--teal)}
+  .tagline{font-weight:700;color:rgba(255,255,255,.55);margin-bottom:14px;font-size:.9rem}
+
+  /* chord banner */
+  .chord-card{background:var(--card-bg);border:1px solid rgba(255,255,255,.1);border-radius:var(--radius);padding:14px 16px;text-align:center;margin-bottom:10px}
+  .chord-name{font-family:'Fredoka One',cursive;font-size:1.3rem}
+  .chord-tones{display:flex;justify-content:center;gap:10px;margin-top:8px}
+  .tone{font-family:'Fredoka One',cursive;font-size:1.3rem;width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.08);border:2px solid transparent;transition:transform .15s}
+  .tone.t0{color:var(--yellow)} .tone.t1{color:var(--pink)} .tone.t2{color:var(--teal)}
+  .tone.mine{border-color:currentColor;transform:scale(1.12);box-shadow:0 0 16px currentColor}
+  .chord-sub{font-size:.78rem;font-weight:700;color:rgba(255,255,255,.5);margin-top:8px}
+
+  /* campfire scene */
+  .scene{position:relative;width:100%;aspect-ratio:1/1;max-height:480px}
+  .fire{position:absolute;left:50%;top:56%;transform:translate(-50%,-50%) scale(var(--fs,0.7));transition:transform 1s ease;text-align:center;filter:drop-shadow(0 0 calc(30px * var(--fs,0.7)) rgba(255,150,60,.55))}
+  .flame{font-size:5.2rem;animation:flicker 0.9s ease-in-out infinite alternate;display:block;line-height:1}
+  @keyframes flicker{from{transform:scale(1) rotate(-2deg)}to{transform:scale(1.08) rotate(2deg)}}
+  body.calm .flame,@media(prefers-reduced-motion:reduce){.flame{animation:none}}
+  .logs{font-size:2.2rem;display:block;margin-top:-14px}
+  .harmony-label{position:absolute;left:50%;top:80%;transform:translateX(-50%);font-weight:900;font-size:.8rem;color:rgba(255,255,255,.6);white-space:nowrap}
+  .harmony-label b{color:var(--orange)}
+
+  .singer{position:absolute;width:64px;margin-left:-32px;margin-top:-32px;text-align:center;transition:left 1s,top 1s}
+  .orb{width:34px;height:34px;margin:0 auto;border-radius:50%;background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:1rem;transition:background .3s,box-shadow .3s}
+  .singer.h0 .orb{background:var(--yellow);box-shadow:0 0 18px var(--yellow);color:#1A1A2E}
+  .singer.h1 .orb{background:var(--pink);box-shadow:0 0 18px var(--pink)}
+  .singer.h2 .orb{background:var(--teal);box-shadow:0 0 18px var(--teal);color:#1A1A2E}
+  .singer .nm{font-size:.62rem;font-weight:800;color:rgba(255,255,255,.7);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .singer.me .nm{color:var(--yellow)}
+
+  .joinbox{background:var(--card-bg);border:1px solid rgba(255,255,255,.1);border-radius:var(--radius);padding:16px;text-align:center}
+  input{font-family:'Nunito';font-weight:800;font-size:1.05rem;padding:12px 14px;border:2px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);border-radius:14px;width:100%;color:#fff;margin-bottom:10px}
+  input::placeholder{color:rgba(255,255,255,.4)}
+  input:focus{outline:none;border-color:var(--yellow)}
+  button{font-family:'Fredoka One',cursive;font-size:1rem;border:none;border-radius:16px;padding:13px 20px;cursor:pointer;color:#fff;width:100%}
+  .btn-main{background:linear-gradient(135deg,var(--orange),var(--pink));box-shadow:0 6px 20px rgba(255,112,67,.4)}
+  button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+  .status{font-weight:800;color:rgba(255,255,255,.6);margin-top:10px;min-height:1.4em;text-align:center;font-size:.9rem}
+  .toggle{display:flex;align-items:center;justify-content:center;gap:8px;font-weight:800;cursor:pointer;margin-top:10px;font-size:.85rem;color:rgba(255,255,255,.7)}
+  .toggle input{width:18px;height:18px;accent-color:var(--yellow);margin:0;padding:0}
+
+  .bottom-nav{position:fixed;left:0;right:0;bottom:0;background:rgba(26,26,46,.92);backdrop-filter:blur(12px);border-top:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-around;padding:10px 0;z-index:100}
+  .nav-item{text-align:center;font-size:.65rem;font-weight:800;color:rgba(255,255,255,.5);cursor:pointer;text-decoration:none}
+  .nav-item.active{color:var(--yellow)}
+  .nav-icon{font-size:1.2rem}
+</style>
+</head>
+<body>
+<div class="stars" id="stars"></div>
+
+<div class="wrapper">
+  <div class="topbar">
+    <div class="logo"><a href="index.html">Singlo <span>🎵</span></a> 🔥 Choir Bonfire</div>
+    <div class="online">🌍 <b id="onlineCount">–</b> singers online</div>
+  </div>
+  <div class="tagline">Everyone around this fire is real. Sing any of the three notes — the fire grows when we harmonize.</div>
+
+  <div class="chord-card" id="chordCard" style="display:none">
+    <div class="chord-name" id="chordName">C major</div>
+    <div class="chord-tones">
+      <div class="tone t0" id="tone0">C</div>
+      <div class="tone t1" id="tone1">E</div>
+      <div class="tone t2" id="tone2">G</div>
+    </div>
+    <div class="chord-sub">Pick ANY of these notes, any octave — hum it and hold. New chord soon.</div>
+  </div>
+
+  <div class="joinbox" id="joinBox">
+    <input id="singerName" placeholder="Your name" maxlength="16">
+    <button class="btn-main" id="joinBtn">🔥 Join the bonfire</button>
+    <label class="toggle"><input type="checkbox" id="calmToggle"> Calm mode (no flicker, no sounds)</label>
+    <div class="status" id="status"></div>
+  </div>
+
+  <div class="scene" id="scene" style="display:none">
+    <div class="fire" id="fire"><span class="flame">🔥</span><span class="logs">🪵🪵</span></div>
+    <div class="harmony-label" id="harmonyLabel"><b>0%</b> in harmony · <span id="activeCount">0</span> singing</div>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <a class="nav-item" href="index.html"><div class="nav-icon">🏠</div>Home</a>
+  <a class="nav-item" href="practice.html"><div class="nav-icon">🎯</div>Practice</a>
+  <a class="nav-item" href="voice-painting.html"><div class="nav-icon">🎨</div>Paint</a>
+  <a class="nav-item" href="waves.html"><div class="nav-icon">🌊</div>Waves</a>
+  <a class="nav-item active" href="choir.html"><div class="nav-icon">🔥</div>Choir</a>
+  <a class="nav-item" href="battle.html"><div class="nav-icon">⚔️</div>Battle</a>
+</nav>
+
+<script src="js/singlo-core.js"></script>
+<script>
+const SERVER_URL = location.hostname === 'localhost' ? 'http://localhost:3001' : 'https://YOUR-APP.fly.dev';
+const socket = io(SERVER_URL);
+const $ = id => document.getElementById(id);
+const S = window.Singlo;
+
+/* night sky */
+for (let i = 0; i < 40; i++) {
+  const st = document.createElement('div');
+  st.className = 'star';
+  st.style.cssText = `left:${Math.random()*100}vw;top:${Math.random()*60}vh;animation-delay:${Math.random()*3}s`;
+  $('stars').appendChild(st);
+}
+$('calmToggle').addEventListener('change', () => document.body.classList.toggle('calm', $('calmToggle').checked));
+
+/* state */
+let mic = null, chord = null, joined = false;
+const singers = new Map(); // id -> element
+let myId = null, lastSent = 0;
+
+socket.on('connect', () => { myId = socket.id; });
+socket.on('online', n => $('onlineCount').textContent = n);
+
+/* join */
+$('joinBtn').addEventListener('click', async () => {
+  try { mic = await S.startMic(onSample); }
+  catch(e){ $('status').textContent = 'Microphone needed to join the fire.'; return; }
+  const p = S.getProgress();
+  const name = $('singerName').value || p.name || 'Singer';
+  S.setPref('name', name);
+  socket.emit('join_choir', { name, belt: p.belt.emoji });
+  joined = true;
+  $('joinBox').style.display = 'none';
+  $('chordCard').style.display = 'block';
+  $('scene').style.display = 'block';
+});
+
+/* my pitch → tone highlight + throttled send */
+let myTone = -1;
+function onSample(s) {
+  if (!joined) return;
+  let tone = -1;
+  if (!s.silent && Math.abs(s.cents) <= 70 && chord) {
+    const ti = chord.tones.indexOf(s.chroma);
+    if (ti >= 0) tone = ti;
+    const now = performance.now();
+    if (now - lastSent > 120) { lastSent = now; socket.emit('choir_pitch', { chroma: s.chroma, cents: s.cents }); }
+  }
+  if (tone !== myTone) {
+    myTone = tone;
+    [0,1,2].forEach(i => $('tone'+i).classList.toggle('mine', i === tone));
+    setSingerTone(myId, tone);
+  }
+}
+
+/* chord cycle */
+socket.on('choir_chord', c => {
+  chord = c;
+  $('chordName').textContent = c.name;
+  c.labels.forEach((l, i) => $('tone'+i).textContent = l);
+  if (mic && !$('calmToggle').checked) {
+    // softly play the chord tones as a guide (root octave 4)
+    c.tones.forEach((t, i) => setTimeout(() => S.playTone(mic.ctx, 60 + ((t - 0 + 12) % 12), 0.7, 0.07), i * 250));
+  }
+});
+
+/* roster → orbs in a circle around the fire */
+socket.on('choir_roster', roster => {
+  const ids = new Set(roster.map(r => r.id));
+  for (const [id, el] of singers) if (!ids.has(id)) { el.remove(); singers.delete(id); }
+  roster.forEach(r => { if (!singers.has(r.id)) addSinger(r); });
+  layoutSingers();
+});
+
+function addSinger(r) {
+  const el = document.createElement('div');
+  el.className = 'singer' + (r.id === myId ? ' me' : '');
+  el.innerHTML = `<div class="orb">${r.belt || '🎤'}</div><div class="nm">${escapeHtml(r.name)}${r.id === myId ? ' (you)' : ''}</div>`;
+  $('scene').appendChild(el);
+  singers.set(r.id, el);
+}
+
+function layoutSingers() {
+  const n = singers.size, R = 42; // % radius around fire center (50%,56%)
+  let i = 0;
+  for (const el of singers.values()) {
+    const a = (i / n) * Math.PI * 2 - Math.PI / 2;
+    el.style.left = (50 + R * Math.cos(a)) + '%';
+    el.style.top  = (56 + R * 0.85 * Math.sin(a)) + '%';
+    i++;
+  }
+}
+
+/* peers' pitches light their orbs */
+socket.on('choir_peer_pitch', ({ id, chroma }) => {
+  if (!chord) return;
+  setSingerTone(id, chord.tones.indexOf(chroma));
+});
+
+const toneTimers = new Map();
+function setSingerTone(id, tone) {
+  const el = singers.get(id);
+  if (!el) return;
+  el.classList.remove('h0','h1','h2');
+  if (tone >= 0) {
+    el.classList.add('h' + tone);
+    clearTimeout(toneTimers.get(id));
+    toneTimers.set(id, setTimeout(() => el.classList.remove('h0','h1','h2'), 1500));
+  }
+}
+
+/* harmony → fire size */
+socket.on('choir_harmony', ({ score, active }) => {
+  const fs = 0.6 + score * 1.1; // 0.6x → 1.7x
+  $('fire').style.setProperty('--fs', fs.toFixed(2));
+  $('harmonyLabel').innerHTML = `<b>${Math.round(score*100)}%</b> in harmony · <span>${active}</span> singing`;
+});
+
+window.addEventListener('beforeunload', () => joined && socket.emit('leave_choir'));
+
+function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>

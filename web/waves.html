@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Singlo 🌊 – Voice Waves</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1A1A2E">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{--pink:#FF4F91;--yellow:#FFD93D;--teal:#00C9A7;--purple:#7B61FF;--orange:#FF7043;--dark:#1A1A2E;--card-bg:rgba(255,255,255,0.07);--radius:24px}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Nunito',sans-serif;background:var(--dark);color:#fff;min-height:100vh;overflow-x:hidden}
+  .bg{position:fixed;inset:0;z-index:0;overflow:hidden}
+  .blob{position:absolute;border-radius:50%;filter:blur(80px);opacity:.25;animation:float 8s ease-in-out infinite}
+  .blob1{width:460px;height:460px;background:var(--teal);top:-120px;right:-120px}
+  .blob2{width:380px;height:380px;background:var(--pink);bottom:-100px;left:-60px;animation-delay:2s}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-30px)}}
+  body.calm .blob{animation:none;opacity:.12}
+  @media(prefers-reduced-motion:reduce){.blob{animation:none}}
+
+  .wrapper{position:relative;z-index:1;max-width:640px;margin:0 auto;padding:22px 18px 96px}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:8px}
+  .logo{font-family:'Fredoka One',cursive;font-size:1.4rem}
+  .logo a{color:#fff;text-decoration:none}
+  .xp-hud{background:var(--card-bg);border:1px solid rgba(255,255,255,.1);border-radius:50px;padding:6px 14px;font-weight:800;font-size:.85rem}
+  .xp-hud span{color:var(--yellow)}
+  .tagline{font-weight:700;color:rgba(255,255,255,.55);margin-bottom:14px;font-size:.9rem}
+
+  .card{background:var(--card-bg);border:1px solid rgba(255,255,255,.1);border-radius:var(--radius);padding:16px;margin-bottom:14px;backdrop-filter:blur(10px)}
+
+  /* THE wave */
+  .wave-card{padding:10px}
+  #waveCanvas{width:100%;height:180px;display:block;border-radius:16px;background:rgba(0,0,0,.25)}
+  .wave-status{text-align:center;font-weight:800;margin-top:8px;min-height:1.5em}
+  .wave-status.rec{color:var(--pink)}
+  .rec-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--pink);margin-right:6px;animation:pulse 1s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  body.calm .rec-dot{animation:none}
+
+  button{font-family:'Fredoka One',cursive;font-size:1rem;border:none;border-radius:16px;padding:13px 20px;cursor:pointer;color:#fff}
+  .btn-main{background:linear-gradient(135deg,var(--purple),var(--pink));box-shadow:0 6px 20px rgba(123,97,255,.4);width:100%}
+  .btn-rec{background:linear-gradient(135deg,var(--pink),var(--orange));box-shadow:0 6px 20px rgba(255,79,145,.4);width:100%}
+  .btn-ghost{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2)}
+  button:disabled{opacity:.45;cursor:default}
+  button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+  .btnrow{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+  .btnrow>*{flex:1;min-width:130px}
+  .toggle{display:flex;align-items:center;justify-content:center;gap:8px;font-weight:800;cursor:pointer;margin-top:10px;font-size:.85rem;color:rgba(255,255,255,.7)}
+  .toggle input{width:18px;height:18px;accent-color:var(--yellow)}
+
+  /* poem to read */
+  .poem h2{font-family:'Fredoka One',cursive;font-size:1.05rem;margin-bottom:8px}
+  .poem ol{list-style:none;display:flex;flex-direction:column;gap:6px}
+  .poem li{padding:8px 12px;border-radius:12px;background:rgba(255,255,255,.05);font-weight:700;color:rgba(255,255,255,.85);cursor:pointer;border:2px solid transparent}
+  .poem li.reading{border-color:var(--yellow);background:rgba(255,217,61,.1)}
+  .poem .hint{font-size:.78rem;font-weight:700;color:rgba(255,255,255,.45);margin-top:8px}
+
+  /* expression meter — a mountain, not a grade */
+  .express{margin-top:4px}
+  .express .lbl{display:flex;justify-content:space-between;font-weight:800;font-size:.85rem;color:rgba(255,255,255,.6)}
+  .mountain{height:14px;border-radius:7px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:6px}
+  .mountain div{height:100%;width:0%;background:linear-gradient(90deg,var(--teal),var(--yellow),var(--pink));transition:width .8s}
+  .express .msg{font-weight:800;margin-top:8px;min-height:1.4em;color:var(--teal)}
+
+  /* clips */
+  .clips h2{font-family:'Fredoka One',cursive;font-size:1.05rem;margin-bottom:8px}
+  .clip{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.05);border-radius:14px;padding:10px 12px;margin-bottom:8px}
+  .clip .info{flex:1;font-weight:800;font-size:.9rem}
+  .clip .info small{display:block;font-weight:700;color:rgba(255,255,255,.5)}
+  .clip button{width:auto;padding:9px 16px}
+
+  .bottom-nav{position:fixed;left:0;right:0;bottom:0;background:rgba(26,26,46,.92);backdrop-filter:blur(12px);border-top:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-around;padding:10px 0;z-index:100}
+  .nav-item{text-align:center;font-size:.65rem;font-weight:800;color:rgba(255,255,255,.5);cursor:pointer;text-decoration:none}
+  .nav-item.active{color:var(--yellow)}
+  .nav-icon{font-size:1.2rem}
+</style>
+</head>
+<body>
+<div class="bg"><div class="blob blob1"></div><div class="blob blob2"></div></div>
+
+<div class="wrapper">
+  <div class="topbar">
+    <div class="logo"><a href="index.html">Singlo <span>🎵</span></a> 🌊 Voice Waves</div>
+    <div class="xp-hud"><span id="hudBelt">🤍</span> <span id="hudXP">0 XP</span></div>
+  </div>
+  <div class="tagline">See your voice. Record a poem, watch the waves, then hear yourself back.</div>
+
+  <div class="card wave-card">
+    <canvas id="waveCanvas"></canvas>
+    <div class="wave-status" id="waveStatus">Press start and say hello — watch your voice appear.</div>
+    <div class="btnrow">
+      <button class="btn-main" id="startBtn">🎤 Start</button>
+      <button class="btn-rec" id="recBtn" disabled>⏺ Record</button>
+    </div>
+    <label class="toggle"><input type="checkbox" id="calmToggle"> Calm mode (no glow, no motion)</label>
+  </div>
+
+  <div class="card poem">
+    <h2>📖 Read this out loud (tap a line to highlight it)</h2>
+    <ol id="poemList"></ol>
+    <div class="hint">Big voice, small voice, fast, slow — every way you say it makes a different wave. There's no wrong wave.</div>
+  </div>
+
+  <div class="card express">
+    <div class="lbl"><span>🏔️ How far your voice traveled</span><span id="rangeVal"></span></div>
+    <div class="mountain"><div id="rangeFill"></div></div>
+    <div class="msg" id="expressMsg"></div>
+  </div>
+
+  <div class="card clips" id="clipsCard" style="display:none">
+    <h2>🎧 Your recordings</h2>
+    <div id="clipList"></div>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <a class="nav-item" href="index.html"><div class="nav-icon">🏠</div>Home</a>
+  <a class="nav-item" href="practice.html"><div class="nav-icon">🎯</div>Practice</a>
+  <a class="nav-item" href="voice-painting.html"><div class="nav-icon">🎨</div>Paint</a>
+  <a class="nav-item active" href="waves.html"><div class="nav-icon">🌊</div>Waves</a>
+  <a class="nav-item" href="choir.html"><div class="nav-icon">🔥</div>Choir</a>
+</nav>
+
+<script src="js/singlo-core.js"></script>
+<script>
+const S = window.Singlo;
+const $ = id => document.getElementById(id);
+
+/* same poem as Voice Painting — read what you painted */
+const POEM = [
+  'Good morning, sun, you glow so bright,',
+  'a cotton cloud floats soft and white,',
+  'the tree waves hello with leafy hands,',
+  'a little house on quiet land,',
+  'and green grass hums where daisies stand.',
+];
+POEM.forEach((line, i) => {
+  const li = document.createElement('li');
+  li.textContent = line;
+  li.addEventListener('click', () => {
+    document.querySelectorAll('.poem li').forEach(l => l.classList.remove('reading'));
+    li.classList.add('reading');
+  });
+  $('poemList').appendChild(li);
+});
+
+function renderHud(){ const p=S.getProgress(); $('hudBelt').textContent=p.belt.emoji; $('hudXP').textContent=p.xp.toLocaleString()+' XP'; }
+renderHud();
+
+$('calmToggle').addEventListener('change', () => document.body.classList.toggle('calm', $('calmToggle').checked));
+
+/* ---------- live wave ---------- */
+let mic = null, wave = null, recorder = null, recording = false;
+let pitchTrack = [], firstRecordXP = true;
+
+$('startBtn').addEventListener('click', async () => {
+  if (mic) return;
+  try {
+    mic = await S.startMic(s => { if (recording && !s.silent) pitchTrack.push(s.midi); });
+  } catch(e) {
+    $('waveStatus').textContent = 'Microphone blocked — allow mic access to see your voice.';
+    return;
+  }
+  wave = S.attachWaveform($('waveCanvas'), mic.analyser, { glow: !$('calmToggle').checked });
+  $('startBtn').disabled = true;
+  $('startBtn').textContent = '🎤 Listening';
+  $('recBtn').disabled = false;
+  $('waveStatus').textContent = 'That wiggly line is YOUR voice. Try loud, quiet, high, low!';
+});
+
+/* ---------- record & hear yourself ---------- */
+$('recBtn').addEventListener('click', () => recording ? stopRec() : startRec());
+
+function startRec() {
+  pitchTrack = [];
+  recorder = new MediaRecorder(mic.stream);
+  const chunks = [];
+  recorder.ondataavailable = e => chunks.push(e.data);
+  recorder.onstop = () => finishRec(new Blob(chunks, { type: recorder.mimeType }));
+  recorder.start();
+  recording = true;
+  $('recBtn').textContent = '⏹ Stop';
+  $('waveStatus').innerHTML = '<span class="rec-dot"></span>Recording — read your poem to the wave!';
+  $('waveStatus').classList.add('rec');
+}
+
+function stopRec() {
+  recording = false;
+  recorder.stop();
+  $('recBtn').textContent = '⏺ Record';
+  $('waveStatus').classList.remove('rec');
+}
+
+function finishRec(blob) {
+  $('waveStatus').textContent = 'Got it! Press play to hear yourself and watch the wave dance. 🌊';
+  addClip(blob);
+  showExpression();
+  if (firstRecordXP && pitchTrack.length > 20) {
+    firstRecordXP = false;
+    S.addXP(15); renderHud();
+    $('waveStatus').textContent += ' +15 XP!';
+  }
+}
+
+/* ---------- expression meter: how far the voice traveled ----------
+   p90 - p10 of pitch in semitones. Framed as distance, never a grade. */
+function showExpression() {
+  if (pitchTrack.length < 10) { $('expressMsg').textContent = ''; return; }
+  const sorted = [...pitchTrack].sort((a,b)=>a-b);
+  const p10 = sorted[Math.floor(sorted.length*0.1)];
+  const p90 = sorted[Math.floor(sorted.length*0.9)];
+  const range = Math.max(0, p90 - p10); // semitones
+  $('rangeVal').textContent = range.toFixed(1) + ' notes';
+  $('rangeFill').style.width = Math.min(100, (range/12)*100) + '%';
+  $('expressMsg').textContent =
+    range < 2  ? 'A calm, steady voice — like a quiet lake. Try a surprised "WOW?" and watch the mountain grow!' :
+    range < 5  ? 'Your voice went up and down like little hills. Lovely reading!' :
+    range < 9  ? 'Big beautiful hills! Your voice is full of expression. 🏔️' :
+                 'WOW — your voice climbed a whole mountain range! That is spoken-word energy. 🏔️🏔️';
+}
+
+/* ---------- clips: hear yourself + watch playback wave ---------- */
+let clipN = 0;
+function addClip(blob) {
+  $('clipsCard').style.display = 'block';
+  clipN++;
+  const url = URL.createObjectURL(blob);
+  const row = document.createElement('div');
+  row.className = 'clip';
+  row.innerHTML = `<div class="info">Recording ${clipN}<small>${new Date().toLocaleTimeString()}</small></div>`;
+  const btn = document.createElement('button');
+  btn.className = 'btn-ghost';
+  btn.textContent = '▶ Play';
+  btn.addEventListener('click', () => playClip(url, btn));
+  row.appendChild(btn);
+  $('clipList').prepend(row);
+}
+
+let playWave = null;
+function playClip(url, btn) {
+  const audio = new Audio(url);
+  // route playback through an analyser so the wave dances to HER voice
+  const src = mic.ctx.createMediaElementSource(audio);
+  const an = mic.ctx.createAnalyser();
+  an.fftSize = 2048;
+  src.connect(an); an.connect(mic.ctx.destination);
+  if (wave) wave.stop();
+  if (playWave) playWave.stop();
+  playWave = S.attachWaveform($('waveCanvas'), an, { glow: !$('calmToggle').checked, colors:['#00C9A7','#FFD93D','#FF4F91'] });
+  btn.disabled = true; btn.textContent = '🌊 Playing';
+  $('waveStatus').textContent = "That's YOUR voice making those waves!";
+  audio.play();
+  audio.onended = () => {
+    btn.disabled = false; btn.textContent = '▶ Play';
+    playWave.stop();
+    wave = S.attachWaveform($('waveCanvas'), mic.analyser, { glow: !$('calmToggle').checked });
+    $('waveStatus').textContent = 'Record another, or read it a totally different way!';
+  };
+}
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
