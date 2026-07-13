@@ -345,6 +345,7 @@ header {
   </div>
 </div>
 
+<script src="js/singlo-core.js"></script>
 <script>
 // ── Music theory ─────────────────────────────────────────────────────────────
 
@@ -786,14 +787,27 @@ function earnXP(ik, cents) {
   if (xpAccum >= 1) {
     const earned  = Math.floor(xpAccum);
     xpAccum      -= earned;
-    const p       = loadProg();
-    const oldBelt = beltIdx(p.xp || 0);
-    p.xp          = (p.xp || 0) + earned;
-    if (bestStreak > (p.bestStreak || 0)) p.bestStreak = Math.round(bestStreak);
-    const newBelt = beltIdx(p.xp);
-    saveProg(p);
-    updateHUD(p.xp, newBelt);
-    if (newBelt > oldBelt) showBeltUp(newBelt);
+    // best-streak stat (separate write, then XP goes through the gated core)
+    const p = loadProg();
+    if (bestStreak > (p.bestStreak || 0)) { p.bestStreak = Math.round(bestStreak); saveProg(p); }
+    if (window.Singlo) {
+      // mastery gate: sustained in-key sound = the "hold" benchmarks
+      const kid = (p.ageGroup === 'kids');
+      if (streakSec >= 1)              Singlo.awardStar('y_hold');
+      if (streakSec >= (kid ? 3 : 5))  Singlo.awardStar('w_hold');
+      if (earned >= 5)                 Singlo.recordSpark();  // playful effort, capped at 7
+    }
+    // XP + promotion via singlo-core (belt = XP threshold AND skill gate)
+    let r;
+    if (window.Singlo) {
+      r = Singlo.addXP(earned);
+    } else {
+      const q = loadProg(); const ob = beltIdx(q.xp || 0);
+      q.xp = (q.xp || 0) + earned; saveProg(q);
+      r = { xp: q.xp, beltIndex: beltIdx(q.xp), promoted: beltIdx(q.xp) > ob };
+    }
+    updateHUD(r.xp, r.beltIndex);
+    if (r.promoted) showBeltUp(r.beltIndex);
     if (earned >= 5) popXP('+' + earned + ' XP');
   }
 }
@@ -832,8 +846,8 @@ function showBeltUp(bi) {
 
 function closeBeltUp() {
   document.getElementById('beltupOverlay').classList.remove('show');
-  const p = loadProg();
-  location.href = 'badges.html?promoted=' + beltIdx(p.xp || 0);
+  const bi = window.Singlo ? Singlo.getProgress().beltIndex : beltIdx(loadProg().xp || 0);
+  location.href = 'badges.html?promoted=' + bi;
 }
 
 // Hook XP into the main loop
@@ -881,10 +895,10 @@ function stopMic() {
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 
-// Load saved XP into HUD on page load
+// Load saved XP into HUD on page load (gated belt, not raw XP tier)
 (function() {
   const p  = loadProg();
-  const bi = beltIdx(p.xp || 0);
+  const bi = window.Singlo ? Singlo.getProgress().beltIndex : beltIdx(p.xp || 0);
   updateHUD(p.xp || 0, bi);
 })();
 

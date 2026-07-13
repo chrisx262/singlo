@@ -48,6 +48,19 @@ Live neon waveform of your voice. Record a poem reading → play back → the wa
 ### Part 9 — Choir Bonfire 🔥 ✅ SHIPPED
 One global room, night sky, campfire. Server cycles a chord (C→Am→F→G) every 25s; sing ANY of the 3 chord tones in any octave. Every real singer = an orb around the fire, lit by their chord tone. **The fire grows as harmony rises.** Live 🌍 online counter on homepage. Verified: 3 singers, 2 on chord tones → 67% harmony. (`web/choir.html`)
 
+### Part 9b — Mastery Gates 🥋 ✅ SHIPPED (White + Yellow)
+Belt promotion now needs the XP threshold **and** the belt's skill gate —
+7 Practice Sparks (effort, never fails) + 3 Mastery Stars (measured,
+age-adaptive) + 1 Show Pass, per `docs/KIDS_BELT_CRITERIA.md`. XP measures
+activity; belts measure ability. Poetry modes earn the same ladder (Waves
+recordings = sparks, 5+ semitone expression counts double; Voice Painting
+= spark + steady-voice star). Existing players grandfathered. Engine in
+`singlo-core.js` (`recordSpark/awardStar/awardShow/gateStatus`), gate strip
+on badges.html, hooks in practice/pitch/waves/voice-painting.
+Test: `node web/js/test-gates.mjs` (16 checks).
+- [ ] TODO: wire Orange→Black curricula (currently XP-only) as each belt's
+      game tasks land; add cue-based start/stop tasks for White
+
 ### Part 10 — Venues by Belt 🎪 PLANNED
 | Belts | Venue | Crowd |
 |---|---|---|

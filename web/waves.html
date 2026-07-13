@@ -196,6 +196,14 @@ function finishRec(blob) {
   $('waveStatus').textContent = 'Got it! Press play to hear yourself and watch the wave dance. 🌊';
   addClip(blob);
   showExpression();
+  /* mastery gate: recording a reading = a Practice Spark; a voice that
+     travels 5+ semitones counts double (Yellow's explore-high-and-low
+     spark, per docs/KIDS_BELT_CRITERIA.md). Poetry earns the same ladder. */
+  if (pitchTrack.length > 20) {
+    const sorted = [...pitchTrack].sort((a,b)=>a-b);
+    const range = Math.max(0, sorted[Math.floor(sorted.length*0.9)] - sorted[Math.floor(sorted.length*0.1)]);
+    S.recordSpark(range >= 5 ? 2 : 1);
+  }
   if (firstRecordXP && pitchTrack.length > 20) {
     firstRecordXP = false;
     S.addXP(15); renderHud();

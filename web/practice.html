@@ -304,6 +304,23 @@ async function finishExercise() {
   const weakNotes = Object.entries(session.weak).sort((a,b)=>b[1]-a[1]).slice(0,2).map(e=>e[0]);
   const summary = { ageGroup, exercise: ex.title, accuracy, avgCents,
                     maxHoldSec: Math.round(session.maxHold * 10) / 10, weakNotes };
+
+  /* ---- mastery gate (docs/KIDS_BELT_CRITERIA.md, age-adaptive targets) ----
+     Sparks reward effort; Stars/Show require the measured benchmark.       */
+  const kid = ageGroup === 'kids';
+  let gatePromo = null;
+  const track = r => { if (r && r.promoted) gatePromo = r; };
+  track(S.recordSpark());                                       // effort always counts
+  track(S.awardStar('w_startstop'));                            // finished start → stop
+  if (session.hits >= 10)                    track(S.awardStar('w_sounds'));
+  if (session.maxHold >= (kid ? 3 : 5))      track(S.awardStar('w_hold'));
+  if (accuracy >= (kid ? 40 : 50))           track(S.awardShow('w_show'));
+  if (session.hits >= 3 && Math.abs(avgCents) <= (kid ? 200 : 100))
+                                             track(S.awardStar('y_targets'));
+  if (session.maxHold >= 1)                  track(S.awardStar('y_hold'));
+  if (accuracy >= 50)                        track(S.awardStar('y_rate'));
+  if (accuracy >= (kid ? 60 : 70))           track(S.awardShow('y_show'));
+
   session = null;
   $('status').textContent = `✅ Complete! +${ex.xp} XP`;
   $('nextEx').style.display = 'inline-block';
@@ -311,6 +328,7 @@ async function finishExercise() {
   const result = S.addXP(ex.xp);        // writes to singlo_progress — shared with pitch.html & badges.html
   renderBelt();
   if (result.promoted) showPromotion(result.belt);
+  else if (gatePromo) showPromotion(gatePromo.belt);   // the final star/show can itself complete the gate
 
   $('coachText').textContent = 'thinking…';
   $('coachBox').classList.add('show');

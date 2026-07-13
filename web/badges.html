@@ -177,6 +177,9 @@ header { display:flex; align-items:center; justify-content:space-between; margin
       <span id="progPct">0%</span>
     </div>
     <div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+    <div id="gateRow" style="display:none;margin-top:10px;padding:10px 12px;border-radius:12px;
+         background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);
+         font-size:0.72rem;line-height:1.7;color:rgba(255,255,255,0.75)"></div>
     <div class="stats-row">
       <div class="stat-box"><div class="stat-val" id="statXP">0</div><div class="stat-lbl">Total XP</div></div>
       <div class="stat-box"><div class="stat-val" id="statSessions">0</div><div class="stat-lbl">Sessions</div></div>
@@ -206,6 +209,7 @@ header { display:flex; align-items:center; justify-content:space-between; margin
   </div>
 </div>
 
+<script src="js/singlo-core.js"></script>
 <script>
 const BELTS = [
   { name:'White Belt',  emoji:'🤍', color:'#c8c8e8', xp:0,     tagline:'Every master started here',         next:'Yellow Belt' },
@@ -223,6 +227,28 @@ function loadProgress() {
   try { return JSON.parse(localStorage.getItem('singlo_progress')) || {}; } catch { return {}; }
 }
 
+/* Skill-gate strip: what's left to EARN the next belt (XP alone isn't enough).
+   Sparks = playful effort · Stars = measured benchmarks · Show = tiny performance. */
+function renderGate(bi) {
+  const row = document.getElementById('gateRow');
+  if (!row || !window.Singlo) return;
+  const gs = Singlo.gateStatus(bi);
+  if (!gs) { row.style.display = 'none'; return; }        // XP-only belt (curriculum not wired yet)
+  const nxt = BELTS[bi + 1];
+  if (!nxt) { row.style.display = 'none'; return; }
+  const stars = gs.stars.map(s =>
+    `<span title="${s.name}: ${s.desc}">${s.earned ? '⭐' : '☆'}</span>`).join(' ');
+  row.innerHTML =
+    `<b style="color:#fff">Skill gate to ${nxt.name}</b> &nbsp;` +
+    (gs.complete
+      ? `✅ complete — keep earning XP to advance!`
+      : `✨ Sparks ${gs.sparks.earned}/${gs.sparks.required} &nbsp;·&nbsp; ${stars} &nbsp;·&nbsp; ` +
+        `<span title="${gs.show.name}: ${gs.show.desc}">🎤 ${gs.show.earned ? '✓' : 'Show Pass'}</span>`) +
+    `<div style="opacity:.55;margin-top:2px">${gs.complete ? '' :
+      gs.stars.filter(s => !s.earned).map(s => `${s.name}: ${s.desc}`).concat(gs.show.earned ? [] : [gs.show.name + ': ' + gs.show.desc]).slice(0,2).join(' · ')}</div>`;
+  row.style.display = 'block';
+}
+
 function beltIdx(xp) {
   let b = 0;
   for (let i = 0; i < BELTS.length; i++) { if (xp >= BELTS[i].xp) b = i; }
@@ -232,7 +258,9 @@ function beltIdx(xp) {
 function render() {
   const p   = loadProgress();
   const xp  = p.xp || 0;
-  const bi  = beltIdx(xp);
+  /* belt = ability: XP threshold AND the skill gate (singlo-core mastery gates) */
+  const bi  = window.Singlo ? Singlo.getProgress().beltIndex : beltIdx(xp);
+  renderGate(bi);
   const b   = BELTS[bi];
   const nxt = BELTS[bi + 1];
 
@@ -267,7 +295,7 @@ function render() {
   const grid = document.getElementById('beltGrid');
   grid.innerHTML = '';
   BELTS.forEach((belt, i) => {
-    const unlocked = xp >= belt.xp;
+    const unlocked = i <= bi;   // earned belts only — XP past a locked skill gate doesn't unlock
     const isCurrent = i === bi;
     const card = document.createElement('div');
     card.className = 'belt-card' + (!unlocked ? ' locked' : '');

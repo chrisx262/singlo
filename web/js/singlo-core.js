@@ -26,27 +26,162 @@
   function saveProg(p) { localStorage.setItem('singlo_progress', JSON.stringify(p)); }
   function beltIdx(xp) { let b = 0; BELTS.forEach((bt, i) => { if (xp >= bt.xp) b = i; }); return b; }
 
-  /** Add XP. Returns { xp, beltIndex, belt, next, promoted } */
+  /* ---------------- Mastery Gates (docs/KIDS_BELT_CRITERIA.md) --------------
+     XP measures activity; belts measure ability. Each belt's curriculum gates
+     promotion to the NEXT belt: 7 Practice Sparks (effort — playful tries) +
+     3 Mastery Stars (measured, age-adaptive) + 1 Show Pass (tiny performance).
+     GATES[i] = curriculum of belt i. A null/missing entry = XP-only promotion
+     until that belt's curriculum is wired (Orange..Black land later). */
+  const GATES = [
+    { // White Belt — Voice Activation (→ Yellow)
+      sparks: 7,
+      stars: [
+        { id: 'w_sounds',    name: 'Sound Maker',   desc: 'Make 10 clear sounds in one session' },
+        { id: 'w_hold',      name: 'Steady Voice',  desc: 'Hold one sound (3s kids / 5s)' },
+        { id: 'w_startstop', name: 'On Cue',        desc: 'Finish an exercise start to stop' },
+      ],
+      show: { id: 'w_show', name: 'Stage Wake-Up', desc: 'Complete an exercise and make the stage react' },
+    },
+    { // Yellow Belt — Pitch Awareness (→ Orange)
+      sparks: 7,
+      stars: [
+        { id: 'y_targets', name: 'Note Finder',   desc: 'Land near target notes (200¢ kids / 100¢)' },
+        { id: 'y_hold',    name: 'Hold the Note', desc: 'Hold a matched note about 1 second' },
+        { id: 'y_rate',    name: '5 of 10',       desc: 'Half your attempts land on target' },
+      ],
+      show: { id: 'y_show', name: 'Three Glowing Notes', desc: 'Strong accuracy across a full round' },
+    },
+  ];
+
+  function _gate(p, i) {
+    p.gates = p.gates || {};
+    return (p.gates[i] = p.gates[i] || { sparks: 0, stars: {}, show: false });
+  }
+
+  /* Existing players earned their current XP-belt before gates existed —
+     grandfather every gate below it so nobody wakes up demoted. */
+  function _grandfather(p) {
+    if (p.gatesMigrated) return;
+    const xb = beltIdx(p.xp || 0);
+    for (let i = 0; i < xb; i++) {
+      const def = GATES[i];
+      if (!def) continue;
+      const g = _gate(p, i);
+      g.sparks = def.sparks;
+      def.stars.forEach(s => { g.stars[s.id] = true; });
+      g.show = true;
+    }
+    p.gatesMigrated = true;
+  }
+
+  function _gateComplete(p, i) {
+    const def = GATES[i];
+    if (!def) return true; // no curriculum wired yet → XP-only
+    const g = (p.gates || {})[i] || { sparks: 0, stars: {}, show: false };
+    return g.sparks >= def.sparks && def.stars.every(s => g.stars[s.id]) && g.show;
+  }
+
+  /* Earned belt = XP threshold AND every lower belt's skill gate cleared. */
+  function earnedBeltIdx(p) {
+    const xb = beltIdx(p.xp || 0);
+    let i = 0;
+    while (i < xb && _gateComplete(p, i)) i++;
+    return i;
+  }
+
+  function _result(p, oldBelt) {
+    const bi = earnedBeltIdx(p);
+    return {
+      xp: p.xp || 0,
+      beltIndex: bi,
+      belt: BELTS[bi],
+      next: BELTS[bi + 1] || null,
+      promoted: bi > oldBelt,
+      gate: _status(p, bi),
+    };
+  }
+
+  function _status(p, i) {
+    const def = GATES[i];
+    if (!def) return null; // XP-only belt
+    const g = (p.gates || {})[i] || { sparks: 0, stars: {}, show: false };
+    return {
+      beltIndex: i,
+      sparks: { earned: Math.min(g.sparks, def.sparks), required: def.sparks },
+      stars: def.stars.map(s => ({ ...s, earned: !!g.stars[s.id] })),
+      show: { ...def.show, earned: !!g.show },
+      complete: _gateComplete(p, i),
+    };
+  }
+
+  /** Add XP (activity). Returns { xp, beltIndex, belt, next, promoted, gate } */
   function addXP(amount) {
     const p = loadProg();
-    const oldBelt = beltIdx(p.xp || 0);
+    _grandfather(p);
+    const oldBelt = earnedBeltIdx(p);
     p.xp = (p.xp || 0) + amount;
-    const newBelt = beltIdx(p.xp);
     saveProg(p);
-    return {
-      xp: p.xp,
-      beltIndex: newBelt,
-      belt: BELTS[newBelt],
-      next: BELTS[newBelt + 1] || null,
-      promoted: newBelt > oldBelt,
-    };
+    return _result(p, oldBelt);
+  }
+
+  /** Practice Spark — playful effort on the current belt. Never fails. */
+  function recordSpark(n = 1) {
+    const p = loadProg();
+    _grandfather(p);
+    const oldBelt = earnedBeltIdx(p);
+    const def = GATES[oldBelt];
+    if (def) {
+      const g = _gate(p, oldBelt);
+      g.sparks = Math.min(def.sparks, g.sparks + n);
+    }
+    saveProg(p);
+    return _result(p, oldBelt);
+  }
+
+  /** Mastery Star — a measured benchmark hit. Idempotent; id maps to its belt. */
+  function awardStar(id) {
+    const p = loadProg();
+    _grandfather(p);
+    const oldBelt = earnedBeltIdx(p);
+    GATES.forEach((def, i) => {
+      if (def && def.stars.some(s => s.id === id)) _gate(p, i).stars[id] = true;
+    });
+    saveProg(p);
+    return _result(p, oldBelt);
+  }
+
+  /** Show Pass — the belt's tiny performance, passed. */
+  function awardShow(id) {
+    const p = loadProg();
+    _grandfather(p);
+    const oldBelt = earnedBeltIdx(p);
+    GATES.forEach((def, i) => {
+      if (def && def.show.id === id) _gate(p, i).show = true;
+    });
+    saveProg(p);
+    return _result(p, oldBelt);
+  }
+
+  /** Gate progress for a belt (default: current). null = XP-only belt. */
+  function gateStatus(i) {
+    const p = loadProg();
+    _grandfather(p);
+    saveProg(p);
+    return _status(p, i === undefined ? earnedBeltIdx(p) : i);
   }
 
   function getProgress() {
     const p = loadProg();
+    _grandfather(p);
+    saveProg(p);
     const xp = p.xp || 0;
-    const bi = beltIdx(xp);
-    return { ...p, xp, beltIndex: bi, belt: BELTS[bi], next: BELTS[bi + 1] || null };
+    const bi = earnedBeltIdx(p);
+    return {
+      ...p, xp,
+      beltIndex: bi, belt: BELTS[bi], next: BELTS[bi + 1] || null,
+      xpBeltIndex: beltIdx(xp),           // raw XP tier (activity only)
+      gate: _status(p, bi),
+    };
   }
 
   function setPref(key, val) { const p = loadProg(); p[key] = val; saveProg(p); }
@@ -174,7 +309,8 @@
   }
 
   window.Singlo = {
-    NOTE_NAMES, BELTS, beltIdx, loadProg, saveProg, addXP, getProgress, setPref,
+    NOTE_NAMES, BELTS, GATES, beltIdx, loadProg, saveProg, addXP, getProgress, setPref,
+    recordSpark, awardStar, awardShow, gateStatus,
     midiToFreq, freqToMidi, noteName, chromaName, autoCorrelate, startMic, playTone, attachWaveform,
   };
 })();

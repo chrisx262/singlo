@@ -298,6 +298,10 @@ function completeRegion(i){
   if(state.done.every(Boolean)){
     $('finishCard').classList.add('show');
     $('noteHint').textContent='The whole picture is painted. 🌈';
+    /* mastery gate: painting a whole picture with held hums = a Practice
+       Spark + the White "steady voice" star (sustained intentional sound). */
+    S.recordSpark();
+    S.awardStar('w_hold');
     S.addXP(COMPLETE_XP);   // shared singlo_progress — counts toward your belt
     renderHud();
   }
