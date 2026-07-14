@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Singlo Kids</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #171421;
+  --stage: #211a32;
+  --panel: rgba(255,255,255,0.08);
+  --line: rgba(255,255,255,0.14);
+  --pink: #ff4f91;
+  --gold: #ffd93d;
+  --mint: #00c9a7;
+  --sky: #45b7ff;
+  --violet: #7b61ff;
+  --coral: #ff7043;
+  --target-color: #ff4f91;
+  --white: #fffaf4;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; letter-spacing: 0; }
+
+body {
+  min-height: 100vh;
+  font-family: "Nunito", sans-serif;
+  color: var(--white);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.04), transparent 34%),
+    linear-gradient(145deg, #141320 0%, #231b34 48%, #2b1d2c 100%);
+  overflow-x: hidden;
+}
+
+button,
+select,
+input {
+  font: inherit;
+}
+
+.app {
+  width: min(100%, 1180px);
+  margin: 0 auto;
+  padding: 18px 16px 34px;
+}
+
+.topbar {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.back-link {
+  min-width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  color: var(--white);
+  text-decoration: none;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid var(--line);
+  font-weight: 900;
+}
+
+.brand {
+  min-width: 0;
+}
+
+.brand-name {
+  font-family: "Fredoka One", cursive;
+  font-size: clamp(1.55rem, 6vw, 2.5rem);
+  line-height: 1;
+}
+
+.brand-sub {
+  color: rgba(255,255,255,0.64);
+  font-weight: 900;
+  margin-top: 3px;
+}
+
+.language-select {
+  height: 42px;
+  max-width: 132px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  color: var(--white);
+  background: rgba(255,255,255,0.09);
+  padding: 0 10px;
+  outline: none;
+}
+
+.language-select option {
+  color: #1d1a2a;
+}
+
+.game-layout {
+  display: grid;
+  gap: 14px;
+}
+
+.stage {
+  position: relative;
+  min-height: 540px;
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.11), rgba(255,255,255,0.03)),
+    radial-gradient(ellipse at 50% 0%, rgba(255,217,61,0.2), transparent 42%),
+    linear-gradient(180deg, #2c2450 0%, #161422 64%, #0f1018 100%);
+  box-shadow: 0 22px 70px rgba(0,0,0,0.34);
+}
+
+.stage::before,
+.stage::after {
+  content: "";
+  position: absolute;
+  top: -20px;
+  width: 33%;
+  height: 72%;
+  pointer-events: none;
+  opacity: 0.26;
+  filter: blur(1px);
+  background: linear-gradient(to bottom, var(--target-color), transparent);
+  transform-origin: top center;
+}
+
+.stage::before { left: 8%; transform: rotate(16deg); }
+.stage::after { right: 8%; transform: rotate(-16deg); }
+
+.stage-awake .stage::before,
+.stage-awake .stage::after {
+  opacity: 0.48;
+}
+
+.voice-live .stage {
+  box-shadow: 0 24px 80px rgba(0,201,167,0.2);
+}
+
+.pitch-burst .stage {
+  box-shadow: 0 24px 92px rgba(255,217,61,0.3);
+}
+
+.stage-head {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 16px;
+}
+
+.pill {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: rgba(20,19,32,0.58);
+  backdrop-filter: blur(16px);
+  font-weight: 900;
+  font-size: 0.82rem;
+}
+
+.pill.gold { color: var(--gold); }
+.pill.mint { color: #8cf5df; }
+
+.canvas-wrap {
+  position: absolute;
+  inset: 72px 14px 126px;
+  z-index: 2;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 22px;
+  overflow: hidden;
+  background: rgba(18,17,30,0.58);
+}
+
+#paintCanvas,
+#fxCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#fxCanvas {
+  pointer-events: none;
+}
+
+.target {
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  top: 38%;
+  width: 132px;
+  height: 132px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  transform: translate(-50%, -50%);
+  border: 2px solid color-mix(in srgb, var(--target-color), white 22%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--target-color), transparent 64%), transparent 68%);
+  box-shadow: 0 0 48px color-mix(in srgb, var(--target-color), transparent 58%);
+  animation: targetPulse 2.3s ease-in-out infinite;
+}
+
+@keyframes targetPulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(0.94); }
+  50% { transform: translate(-50%, -50%) scale(1.05); }
+}
+
+.target-note {
+  font-family: "Fredoka One", cursive;
+  font-size: 3rem;
+  color: var(--white);
+  text-shadow: 0 0 18px var(--target-color);
+}
+
+.stage-floor {
+  position: absolute;
+  z-index: 3;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 132px;
+  border-top: 1px solid rgba(255,255,255,0.12);
+  background:
+    radial-gradient(ellipse at center top, rgba(255,217,61,0.18), transparent 52%),
+    linear-gradient(180deg, rgba(255,255,255,0.09), rgba(0,0,0,0.28));
+}
+
+.wake-zone {
+  position: absolute;
+  z-index: 5;
+  left: 50%;
+  bottom: 30px;
+  width: min(84%, 520px);
+  transform: translateX(-50%);
+  display: grid;
+  gap: 12px;
+}
+
+.status-line {
+  min-height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 999px;
+  background: rgba(20,19,32,0.68);
+  font-family: "Fredoka One", cursive;
+  color: var(--white);
+  text-align: center;
+}
+
+.controls-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 10px;
+}
+
+.wake-button,
+.mic-button {
+  min-height: 74px;
+  border: 0;
+  border-radius: 22px;
+  color: var(--ink);
+  font-family: "Fredoka One", cursive;
+  font-size: clamp(1.05rem, 4vw, 1.35rem);
+  cursor: pointer;
+  transition: transform 0.16s, box-shadow 0.16s;
+}
+
+.wake-button {
+  background: linear-gradient(135deg, var(--gold), var(--pink));
+  box-shadow: 0 16px 40px rgba(255,79,145,0.35);
+}
+
+.mic-button {
+  color: var(--white);
+  background: linear-gradient(135deg, var(--mint), var(--violet));
+  box-shadow: 0 16px 40px rgba(0,201,167,0.28);
+}
+
+.wake-button:hover,
+.mic-button:hover {
+  transform: translateY(-2px);
+}
+
+.listening .mic-button {
+  animation: micPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes micPulse {
+  0%, 100% { box-shadow: 0 16px 40px rgba(0,201,167,0.28); }
+  50% { box-shadow: 0 18px 52px rgba(0,201,167,0.56); }
+}
+
+.side-panel {
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: rgba(255,255,255,0.07);
+  padding: 14px;
+}
+
+.panel-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.metric {
+  min-height: 92px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.06);
+  padding: 12px 8px;
+  text-align: center;
+}
+
+.metric-value {
+  font-family: "Fredoka One", cursive;
+  font-size: 1.35rem;
+  color: var(--gold);
+  margin-bottom: 5px;
+}
+
+.metric-label {
+  color: rgba(255,255,255,0.56);
+  font-size: 0.74rem;
+  font-weight: 900;
+}
+
+.spark-track {
+  height: 14px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.1);
+}
+
+.spark-fill {
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--mint), var(--gold), var(--pink));
+  transition: width 0.35s ease;
+}
+
+.eq-card,
+.monitor-card,
+.volume-card {
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.055);
+  padding: 12px;
+}
+
+.monitor-button {
+  width: 100%;
+  min-height: 52px;
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 16px;
+  color: var(--white);
+  background: rgba(255,255,255,0.08);
+  font-family: "Fredoka One", cursive;
+  cursor: pointer;
+}
+
+.monitor-button.on {
+  color: var(--ink);
+  background: linear-gradient(135deg, var(--gold), var(--mint));
+}
+
+.monitor-hint {
+  color: rgba(255,255,255,0.54);
+  font-size: 0.74rem;
+  font-weight: 900;
+  margin-top: 8px;
+  text-align: center;
+}
+
+.mic-level {
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.055);
+  padding: 12px;
+}
+
+.mic-level-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+  color: rgba(255,255,255,0.7);
+  font-weight: 900;
+}
+
+.mic-level-track {
+  height: 13px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.1);
+}
+
+.mic-level-fill {
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--mint), var(--gold), var(--pink));
+  transition: width 0.08s ease;
+}
+
+.panel-title {
+  font-family: "Fredoka One", cursive;
+  font-size: 1rem;
+  margin-bottom: 10px;
+}
+
+.eq-bars {
+  height: 76px;
+  display: grid;
+  grid-template-columns: repeat(18, 1fr);
+  align-items: end;
+  gap: 4px;
+}
+
+.eq-bar {
+  min-height: 9px;
+  height: 18px;
+  border-radius: 999px 999px 5px 5px;
+  background: linear-gradient(to top, var(--mint), var(--gold), var(--pink));
+  opacity: 0.5;
+  transition: height 0.08s ease, opacity 0.08s ease;
+}
+
+.volume-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-weight: 900;
+  color: rgba(255,255,255,0.7);
+}
+
+.volume-slider {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 12px;
+  border-radius: 999px;
+  outline: 0;
+  background: linear-gradient(90deg, var(--mint), var(--gold), var(--pink));
+}
+
+.volume-slider::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 25px;
+  height: 25px;
+  border: 3px solid white;
+  border-radius: 50%;
+  background: var(--violet);
+}
+
+.volume-slider::-moz-range-thumb {
+  width: 21px;
+  height: 21px;
+  border: 3px solid white;
+  border-radius: 50%;
+  background: var(--violet);
+}
+
+.now-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.note-box {
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.06);
+  padding: 13px;
+  text-align: center;
+}
+
+.note-label {
+  color: rgba(255,255,255,0.55);
+  font-weight: 900;
+  margin-bottom: 5px;
+}
+
+.note-value {
+  font-family: "Fredoka One", cursive;
+  font-size: 2rem;
+  color: var(--white);
+}
+
+@media (min-width: 920px) {
+  .app { padding: 24px 22px 40px; }
+  .game-layout { grid-template-columns: minmax(0, 1fr) 340px; align-items: start; }
+  .stage { min-height: 650px; }
+  .side-panel { min-height: 650px; }
+}
+
+@media (max-width: 620px) {
+  .topbar { grid-template-columns: auto minmax(0, 1fr); }
+  .language-select { grid-column: 1 / -1; max-width: none; width: 100%; }
+  .stage { min-height: 590px; border-radius: 22px; }
+  .canvas-wrap { inset: 72px 10px 150px; }
+  .controls-row { grid-template-columns: 1fr; }
+  .wake-zone { bottom: 18px; width: calc(100% - 22px); }
+  .metric-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<main class="app">
+  <header class="topbar">
+    <a class="back-link" href="index.html" data-i18n="back">Home</a>
+    <div class="brand">
+      <div class="brand-name" data-i18n="brand">Singlo</div>
+      <div class="brand-sub">
+        <span data-i18n="stageName">Light Up The Stage</span> · <span data-i18n="stageMode">Sound Painting</span>
+      </div>
+    </div>
+    <select class="language-select" id="languageSelect" aria-label="Language"></select>
+  </header>
+
+  <section class="game-layout" aria-label="Singlo kids game">
+    <section class="stage" aria-label="Sound painting stage">
+      <div class="stage-head">
+        <div class="pill gold"><span data-i18n="whiteBelt">White Belt</span></div>
+        <div class="pill mint"><span data-i18n="localOnly">Ghost Mode</span></div>
+      </div>
+
+      <div class="canvas-wrap">
+        <canvas id="paintCanvas"></canvas>
+        <canvas id="fxCanvas"></canvas>
+      </div>
+
+      <div class="target">
+        <div class="target-note" id="targetNote">C</div>
+      </div>
+
+      <div class="stage-floor"></div>
+
+      <div class="wake-zone">
+        <div class="status-line" id="statusText">Make any sound</div>
+        <div class="controls-row">
+          <button class="wake-button" id="wakeButton" type="button" data-i18n="wakeStage">Wake Stage</button>
+          <button class="mic-button" id="micButton" type="button" data-i18n="startMic">Start Listening</button>
+        </div>
+      </div>
+    </section>
+
+    <aside class="side-panel" aria-label="Progress and controls">
+      <div class="panel-grid">
+        <div>
+          <div class="panel-title" data-i18n="whiteMeaning">I found my voice</div>
+          <div class="spark-track"><div class="spark-fill" id="sparkFill"></div></div>
+        </div>
+
+        <div class="metric-grid">
+          <div class="metric">
+            <div class="metric-value" id="sparkCount">0/7</div>
+            <div class="metric-label" data-i18n="practiceSparks">Practice Sparks</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value" id="soundCount">0</div>
+            <div class="metric-label" data-i18n="soundActivations">Sound Activations</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value" id="showPassValue">Not yet</div>
+            <div class="metric-label" data-i18n="showPass">Show Pass</div>
+          </div>
+        </div>
+
+        <div class="now-row">
+          <div class="note-box">
+            <div class="note-label" data-i18n="target">Target</div>
+            <div class="note-value" id="targetMirror">C</div>
+          </div>
+          <div class="note-box">
+            <div class="note-label" data-i18n="listening">Listening</div>
+            <div class="note-value" id="nowNote">-</div>
+          </div>
+        </div>
+
+        <div class="eq-card">
+          <div class="panel-title" data-i18n="voiceEnergy">Voice Energy</div>
+          <div class="eq-bars" aria-label="Voice energy bars">
+            <span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span>
+            <span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span>
+            <span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span>
+            <span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span>
+            <span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span>
+            <span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span>
+          </div>
+        </div>
+
+        <div class="mic-level">
+          <div class="mic-level-row">
+            <span data-i18n="micLevel">Mic Level</span>
+            <span id="micLevelText">0%</span>
+          </div>
+          <div class="mic-level-track"><div class="mic-level-fill" id="micLevelFill"></div></div>
+        </div>
+
+        <div class="monitor-card">
+          <button class="monitor-button" id="monitorButton" type="button" data-i18n="hearVoiceOff">Hear Voice: Off</button>
+          <div class="monitor-hint" data-i18n="monitorHint">Use low volume or headphones</div>
+        </div>
+
+        <div class="volume-card">
+          <div class="volume-row">
+            <span data-i18n="voiceVolume">Voice Volume</span>
+            <span id="voiceVolumeValue">75%</span>
+          </div>
+          <input class="volume-slider" id="voiceVolumeSlider" type="range" min="0" max="125" value="75">
+        </div>
+
+        <div class="volume-card">
+          <div class="volume-row">
+            <span data-i18n="pianoVolume">Piano Volume</span>
+            <span id="volumeValue">85%</span>
+          </div>
+          <input class="volume-slider" id="volumeSlider" type="range" min="0" max="100" value="85">
+        </div>
+      </div>
+    </aside>
+  </section>
+</main>
+
+<script src="js/singlo-core.js"></script><!-- shared belts + mastery gates -->
+<script type="module">
+import { initSoundPaintingGame } from './js/sound-painting-game.js?v=10';
+
+initSoundPaintingGame();
+</script>
+</body>
+</html>

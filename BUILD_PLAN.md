@@ -61,6 +61,15 @@ Test: `node web/js/test-gates.mjs` (16 checks).
 - [ ] TODO: wire Orange→Black curricula (currently XP-only) as each belt's
       game tasks land; add cue-based start/stop tasks for White
 
+### Part 9c — Singlo Kids folded in 🧸 ✅ SHIPPED
+The May `dev` branch's Kids Sound Painting (`kids.html` + audio engine +
+i18n en/es/fr/pt + kids progress module) now lives on main, linked from
+the home screen (AGES 5–7 card). Its awards bridge into the shared
+mastery-gate ladder: voice activations = sparks (+ `w_sounds` at 10),
+3s+ voice play = `w_hold`, the finale = White Show Pass. Verified
+headless: one full kids session completes the entire White gate.
+`dev` branch is now fully rescued (code + docs) — safe to archive.
+
 ### Part 10 — Venues by Belt 🎪 PLANNED
 | Belts | Venue | Crowd |
 |---|---|---|
